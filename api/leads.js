@@ -54,6 +54,7 @@ async function saveLeads(leads) {
       access: 'public',
       contentType: 'application/json',
       addRandomSuffix: false,
+      allowOverwrite: true,
       token
     });
     // também tenta gravar local dev para debug, ignora erro em prod (read-only)

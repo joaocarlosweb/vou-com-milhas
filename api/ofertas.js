@@ -66,6 +66,7 @@ module.exports = async (req, res) => {
           access: 'public',
           contentType: 'application/json',
           addRandomSuffix: false,
+          allowOverwrite: true,
           token
         });
       } else {
