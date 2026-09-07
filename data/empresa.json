@@ -1,0 +1,24 @@
+{
+  "nome": "Vou com Milhas",
+  "slogan": "A viagem dos sonhos com praticidade e economia",
+  "cnpj": "00.000.000/0001-00",
+  "anos": "8 anos",
+  "whatsapp": "5584998979071",
+  "canalLink": "https://www.instagram.com/vou_com_milhas",
+  "canalNome": "Seguir @vou_com_milhas",
+  "sobre": "Bem-vindo a bordo da Vou com Milhas! Ajudamos você com a viagem dos sonhos, com praticidade, economia e segurança. Garimpamos promoções relâmpago de passagens aéreas e rodoviárias diariamente. Fale conosco no Instagram ou no WhatsApp.",
+  "diferenciais": [
+    { "titulo": "Atendimento humano", "desc": "Fale com gente de verdade em até 2 min no WhatsApp e Instagram.", "icon": "headset" },
+    { "titulo": "Milhas que valem mais", "desc": "Emitimos com milhas para você pagar menos — até 40% off.", "icon": "plane" },
+    { "titulo": "Suporte até o embarque", "desc": "Acompanhamos check-in e dúvidas até você decolar ou embarcar.", "icon": "shield-check" }
+  ],
+  "depoimentos": [
+    { "nome": "Ana M. - Natal", "texto": "Consegui Natal→JP por R$85 com a Vou com Milhas. Atendimento 10!", "nota": 5 },
+    { "nome": "Carlos J. - Recife", "texto": "Oferta relâmpago avisada no canal, fechei em 3 min no WhatsApp.", "nota": 5 },
+    { "nome": "Juliana R. - Mossoró", "texto": "Empresa confiável, me passou segurança para emitir com milhas.", "nota": 5 }
+  ],
+  "endereco": "Atendimento 100% online • Instagram @vou_com_milhas • WhatsApp 84 99987-9071",
+  "horario": "Seg a Sáb 07h às 22h | Dom 08h às 20h",
+  "instagram": "@vou_com_milhas",
+  "instagramUrl": "https://www.instagram.com/vou_com_milhas"
+}

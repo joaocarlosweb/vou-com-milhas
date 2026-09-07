@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vou com Milhas — Ofertas de Passagens via WhatsApp</title>
+  <meta name="description" content="Bem-vindo a bordo da Vou com Milhas. Garimpamos promoções relâmpago de passagens aéreas nacionais com milhas. Consulte no WhatsApp 84 99987-9071.">
+  <link rel="icon" href="assets/img/logo-voucommilhas.jpg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { fontFamily: { display: ['Outfit','sans-serif'] }, colors: { brand: { navy:'#1E3145', gold:'#F9A521', light:'#F7F9FC' } } } }
+    }
+  </script>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+  <script src="https://unpkg.com/lucide@0.511.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-page="index" class="bg-[#fcfcfd] text-slate-800 antialiased overflow-x-hidden">
+
+  <!-- NAV VOU COM MILHAS -->
+  <nav class="fixed top-0 inset-x-0 z-40 bg-white/85 backdrop-blur-xl border-b border-slate-200/60">
+    <div class="max-w-[1280px] mx-auto px-4 sm:px-6 h-[64px] flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2.5">
+        <img src="assets/img/logo-voucommilhas.jpg" alt="Vou com Milhas" class="w-10 h-10 rounded-xl object-contain bg-white border border-slate-200 p-1 shadow-sm" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+        <div style="display:none" class="w-10 h-10 rounded-xl bg-[#1E3145] flex items-center justify-center text-white"><i data-lucide="plane" class="w-5 h-5"></i></div>
+        <div class="leading-none">
+          <div class="font-display font-[800] text-[16px] tracking-tight leading-none"><span class="text-[#F9A521]">VOU COM</span> <span class="text-[#1E3145]">MILHAS</span></div>
+          <div class="text-[11px] font-semibold tracking-widest text-slate-500"> OFERTAS</div>
+        </div>
+        
+      </a>
+      <div class="flex items-center gap-2">
+        <a href="admin.html" class="hidden sm:inline-flex px-4 py-2 rounded-full text-sm font-medium text-slate-600 hover:text-slate-900">Painel</a>
+        <a href="#resultados" class="hidden md:inline-flex px-4 py-2 rounded-full text-sm font-medium text-slate-600 hover:text-slate-900">Ofertas</a>
+        <a href="https://www.instagram.com/vou_com_milhas" target="_blank" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-white border border-slate-200 text-sm font-medium hover:bg-slate-50"><i data-lucide="instagram" class="w-4 h-4 text-pink-500"></i> Instagram</a>
+        <a href="https://wa.me/5584998979071?text=Ol%C3%A1%20vim%20pelo%20site%20Vou%20com%20Milhas%20e%20quero%20consultar%20oferta" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#25D366] text-white text-sm font-semibold hover:bg-[#128C7E] transition shadow-[0_4px_16px_rgba(37,211,102,0.3)]">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M19.05 4.94A9.82 9.82 0 0 0 12.04 2a9.82 9.82 0 0 0-8.5 14.82L2 22l5.3-1.39A9.82 9.82 0 0 0 12.04 22a9.82 9.82 0 0 0 9.82-9.82 9.76 9.76 0 0 0-2.81-7.24Zm-7.01 13.7a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.15.83.84-3.07-.2-.32a8.2 8.2 0 0 1-1.26-4.37A8.2 8.2 0 0 1 12.04 3.6a8.2 8.2 0 0 1 8.2 8.2 8.2 8.2 0 0 1-8.2 8.84Zm4.52-6.15c-.25-.12-1.47-.73-1.7-.81s-.39-.12-.56.12-.64.81-.79.97-.29.19-.54.06a6.86 6.86 0 0 1-2-1.24 7.56 7.56 0 0 1-1.4-1.73c-.15-.25 0-.39.11-.51s.25-.29.37-.43a1.66 1.66 0 0 0 .25-.41.46.46 0 0 0 0-.43c0-.12-.56-1.35-.77-1.85s-.41-.43-.56-.44h-.48a.9.9 0 0 0-.66.31 2.77 2.77 0 0 0-.86 2.05 4.8 4.8 0 0 0 1 2.57 11 11 0 0 0 4.2 3.71 14.1 14.1 0 0 0 1.4.52 3.36 3.36 0 0 0 1.53.1 2.5 2.5 0 0 0 1.64-1.15.2.2 0 0 0 0-.2c-.06-.1-.25-.16-.5-.28Z"/></svg>
+          WhatsApp
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <div id="aviso-file" class="hidden max-w-[1280px] mx-auto mt-[64px] mx-4 sm:mx-6 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center gap-2">
+    <span>⚠️ Você abriu o arquivo direto (file://). Para ver todas as ofertas, use <strong>Live Server</strong> no VS Code: botão direito em <code>index.html</code> → <em>Open with Live Server</em>.</span>
+  </div>
+  <script>if(location.protocol==='file:') document.getElementById('aviso-file')?.classList.remove('hidden');</script>
+
+  <!-- HERO VOU COM MILHAS - FULL BLEED PIN GSAP -->
+  <section class="hero-section relative pt-[64px] min-h-[520px] lg:min-h-[560px] flex items-center overflow-hidden">
+    <!-- Background vídeo fixa (GSAP pin) com fallback imagem -->
+    <div class="hero-bg-fixed absolute inset-0 -z-10">
+      <video id="hero-video" class="w-full h-full object-cover" autoplay muted loop playsinline preload="auto" poster="assets/img/hero-poster.jpg">
+        <source src="assets/video/hero.mp4" type="video/mp4">
+      </video>
+      <img id="hero-fallback-img" src="assets/img/hero-aviao.jpg" alt="Avião Vou com Milhas" class="hidden w-full h-full object-cover">
+      <div class="absolute inset-0 bg-gradient-to-b from-[#1E3145]/55 via-[#1E3145]/30 to-[#1E3145]/10"></div>
+      <div class="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent"></div>
+      <button id="hero-video-toggle" type="button" class="hidden absolute bottom-4 right-4 w-8 h-8 rounded-full bg-black/40 backdrop-blur border border-white/20 text-white flex items-center justify-center hover:bg-black/60 transition" aria-label="Pausar vídeo"><i data-lucide="pause" class="w-4 h-4"></i></button>
+    </div>
+    <!-- Trail SVG -->
+    <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-20" viewBox="0 0 1200 600" preserveAspectRatio="none">
+      <path id="hero-trail" d="M -20 80 C 180 140, 320 60, 500 90 S 860 140, 980 80 S 1180 180, 1220 120" fill="none" stroke="white" stroke-width="2" stroke-dasharray="8 10" stroke-linecap="round"/>
+      <path d="M -20 420 C 200 480, 400 360, 620 420 S 980 560, 1220 420" fill="none" stroke="white" stroke-width="1.5" stroke-dasharray="6 10" stroke-linecap="round" opacity="0.6"/>
+    </svg>
+    <!-- Conteúdo centralizado (parallax) -->
+    <div class="hero-content relative max-w-[860px] mx-auto px-4 sm:px-6 text-center py-12 lg:py-16">
+      
+      <h1 class="hero-title font-display font-[800] tracking-tight leading-[0.9] text-[38px] sm:text-[52px] lg:text-[60px] mt-5 text-white drop-shadow-[0_2px_16px_rgba(0,0,0,0.25)]">
+        <span class="block flex items-center justify-center gap-3">Onde será <i data-lucide="flag" class="w-7 h-7 text-[#F9A521]"></i></span>
+        <span class="block">a sua próxima</span>
+        <span class="block font-[900] text-[#F9A521]">viagem?</span>
+      </h1>
+      <p class="hero-subtitle mt-4 text-[16px] lg:text-[18px] leading-relaxed text-white/85 max-w-[620px] mx-auto">
+        Viajar com <strong class="text-white">praticidade, economia e segurança</strong> faz toda diferença.<br class="hidden sm:block"> Garimpamos promoções relâmpago diariamente — você consulta no site e fecha no <strong class="text-[#F9A521]">WhatsApp em 2 min</strong>.
+      </p>
+      <div class="hero-stats flex flex-wrap justify-center gap-4 mt-6">
+        <div class="flex items-center gap-2.5 bg-[#1E3145] border border-[#1E3145] rounded-full px-4 py-2.5 shadow-[0_4px_16px_rgba(30,49,69,0.25)]">
+          <div class="w-7 h-7 rounded-full bg-white flex items-center justify-center text-[#1E3145]"><i data-lucide="badge-check" class="w-4 h-4"></i></div>
+          <div class="text-left leading-tight"><div class="text-sm font-bold text-white">1.185 seguidores</div><div class="text-xs text-white/70">@vou_com_milhas</div></div>
+        </div>
+        <div class="flex items-center gap-2.5 bg-[#1E3145] border border-[#1E3145] rounded-full px-4 py-2.5 shadow-[0_4px_16px_rgba(30,49,69,0.25)]">
+          <div class="w-7 h-7 rounded-full bg-[#F9A521] flex items-center justify-center text-[#1E3145]"><i data-lucide="plane" class="w-4 h-4"></i></div>
+          <div class="text-left leading-tight"><div class="text-sm font-bold text-white">1.420 posts</div><div class="text-xs text-white/70">Promoções garimpadas</div></div>
+        </div>
+        <div class="hidden sm:flex items-center gap-2.5 bg-[#1E3145] border border-[#1E3145] rounded-full px-4 py-2.5 shadow-[0_4px_16px_rgba(30,49,69,0.25)]">
+          <div class="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center text-white"><i data-lucide="zap" class="w-4 h-4"></i></div>
+          <div class="text-left leading-tight"><div class="text-sm font-bold text-white">Resposta 2 min</div><div class="text-xs text-white/70">No WhatsApp</div></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- BARRA DE FILTRO ABAIXO DA HERO (sobreposta) -->
+  <section id="barra-busca" class="relative z-20 max-w-[980px] mx-auto px-4 sm:px-6 -mt-8">
+    <form id="form-busca" class="hero-search glass rounded-[20px] lg:rounded-[24px] p-4 sm:p-5 flex flex-col gap-3 shadow-[0_16px_40px_rgba(30,49,69,0.14)] border border-[#F9A521]/20 bg-white/95 backdrop-blur-xl">
+      <div class="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-3 items-end">
+        <label class="relative group text-left">
+          <span class="text-[11px] font-semibold tracking-widest uppercase text-slate-500 ml-1">Origem</span>
+          <div class="mt-1 relative">
+            <i data-lucide="map-pin" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#1E3145]"></i>
+            <input id="origem-input" list="origem-list" placeholder="Ex: Natal" class="w-full pl-9 pr-3 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#1E3145] focus:ring-4 focus:ring-[#1E3145]/10 outline-none text-sm font-medium transition">
+            <datalist id="origem-list"></datalist>
+          </div>
+        </label>
+        <label class="relative group text-left">
+          <span class="text-[11px] font-semibold tracking-widest uppercase text-slate-500 ml-1">Destino</span>
+          <div class="mt-1 relative">
+            <i data-lucide="navigation" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#1E3145]"></i>
+            <input id="destino-input" list="destino-list" placeholder="Ex: João Pessoa" class="w-full pl-9 pr-3 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#1E3145] focus:ring-4 focus:ring-[#1E3145]/10 outline-none text-sm font-medium transition">
+            <datalist id="destino-list"></datalist>
+          </div>
+        </label>
+        <label class="relative group text-left">
+          <span class="text-[11px] font-semibold tracking-widest uppercase text-slate-500 ml-1">Data</span>
+          <div class="mt-1 relative">
+            <i data-lucide="calendar" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#1E3145]"></i>
+            <input id="data-input" type="date" class="w-full pl-9 pr-3 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#1E3145] focus:ring-4 focus:ring-[#1E3145]/10 outline-none text-sm font-medium transition">
+          </div>
+        </label>
+        <div class="flex gap-2 sm:pt-6">
+          <button type="submit" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-[#1E3145] text-white rounded-xl px-8 py-3.5 text-sm font-semibold hover:bg-black transition whitespace-nowrap">
+            <i data-lucide="search" class="w-4 h-4"></i> Buscar ofertas
+          </button>
+          <button id="btn-limpar" type="button" class="px-5 py-3.5 rounded-xl bg-white border border-slate-200 text-sm font-medium hover:bg-slate-50">Limpar</button>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500 px-1">
+        <span class="inline-flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-[#F9A521]"></span> Ofertas ativas</span>
+        <span class="hidden sm:inline">•</span>
+        <span>Sem cadastro • Retiramos encerradas em 1 clique</span>
+        <span class="ml-auto hidden sm:inline-flex items-center gap-1 text-[#1E3145]/60"><i data-lucide="shield-check" class="w-3 h-3"></i> Compra segura</span>
+      </div>
+    </form>
+  </section>
+
+  <!-- DESTINOS DESTAQUE SWIPER -->
+  <section class="max-w-[1280px] mx-auto px-4 sm:px-6 mt-6">
+    <div class="flex items-end justify-between mb-3">
+      <h2 class="font-display font-bold text-lg">Destinos em destaque</h2>
+      <a href="https://www.instagram.com/vou_com_milhas" target="_blank" class="text-xs text-sky-600 font-semibold hover:underline inline-flex items-center gap-1"><i data-lucide="instagram" class="w-3.5 h-3.5"></i> Ver no Instagram →</a>
+    </div>
+    <div class="swiper destinos-swiper !pb-4">
+      <div class="swiper-wrapper" id="destinos-wrapper">
+        <!-- destaques injetados via JS (limit 6) -->
+        <div class="swiper-slide"><div class="rounded-2xl bg-slate-50 border border-slate-200 h-[160px] flex items-center justify-center"><div class="text-center"><div class="w-6 h-6 border-2 border-slate-200 border-t-[#1E3145] rounded-full animate-spin mx-auto"></div><div class="text-xs text-slate-500 mt-2">Carregando destaques...</div></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULTADOS OFERTAS -->
+  <section id="resultados" class="max-w-[1280px] mx-auto px-4 sm:px-6 py-8">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+      <div>
+        <h2 class="font-display font-bold text-[22px] leading-none">Ofertas disponíveis ✈️</h2>
+        <p id="contador-resultados" class="text-sm text-slate-500 mt-1">Carregando ofertas...</p>
+      </div>
+      <div class="flex items-center gap-2 text-xs">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Ativa</span>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Últimas vagas</span>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200"><span class="w-2 h-2 rounded-full bg-slate-300"></span> Encerrada</span>
+      </div>
+    </div>
+
+    <div id="grid-viagens" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+      <div class="col-span-full py-12 flex flex-col items-center justify-center gap-3">
+        <div class="w-8 h-8 border-2 border-slate-200 border-t-[#1E3145] rounded-full animate-spin"></div>
+        <span class="text-sm text-slate-500">Buscando melhores ofertas Vou com Milhas...</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- BLOCO EMPRESA VOU COM MILHAS -->
+  <section id="empresa-bloco" class="max-w-[1280px] mx-auto px-4 sm:px-6 py-8">
+    <div class="rounded-[28px] bg-[#1E3145] text-white overflow-hidden relative">
+      <div class="absolute top-0 right-0 w-[400px] h-[400px] bg-[#F9A521]/10 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/3"></div>
+      <div class="relative p-6 sm:p-8">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10 text-xs font-semibold"><i data-lucide="plane" class="w-3.5 h-3.5 text-[#F9A521]"></i> Sobre a <span id="empresa-nome" class="text-[#F9A521]">Vou com Milhas</span> • <span id="empresa-anos">8 anos</span></div>
+            <h2 id="empresa-slogan" class="font-display font-bold text-2xl mt-3 max-w-[560px]">A viagem dos sonhos com praticidade e economia</h2>
+            <p id="empresa-sobre" class="text-sm text-white/70 mt-2 max-w-[560px] leading-relaxed">Bem-vindo a bordo da Vou com Milhas! Ajudamos você com a viagem dos sonhos...</p>
+            <div class="flex flex-wrap gap-2 mt-4 text-xs">
+              <span id="empresa-cnpj" class="px-3 py-1.5 rounded-full bg-white/10 border border-white/10">CNPJ 00.000.000/0001-00</span>
+              <span id="empresa-horario" class="px-3 py-1.5 rounded-full bg-white/10 border border-white/10">Seg a Sáb 07h às 22h</span>
+              <span id="empresa-endereco" class="px-3 py-1.5 rounded-full bg-white/10 border border-white/10">Atendimento 100% online</span>
+            </div>
+          </div>
+          <a id="empresa-canal-btn" href="https://www.instagram.com/vou_com_milhas" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#F9A521] text-[#1E3145] font-bold hover:bg-yellow-400 transition"><i data-lucide="instagram" class="w-5 h-5"></i> <span id="empresa-canal-nome">Seguir @vou_com_milhas</span></a>
+        </div>
+        <div id="empresa-diferenciais" class="grid md:grid-cols-3 gap-4 mt-8">
+          <!-- injetado via JS -->
+        </div>
+        <div id="empresa-depoimentos" class="grid md:grid-cols-3 gap-4 mt-4">
+          <!-- injetado via JS -->
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMO FUNCIONA -->
+  <section class="bg-[#1E3145] text-white mt-6">
+    <div class="max-w-[1280px] mx-auto px-4 sm:px-6 py-10">
+      <div class="grid md:grid-cols-3 gap-8">
+        <div>
+          <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center mb-3"><i data-lucide="search" class="w-5 h-5"></i></div>
+          <h3 class="font-display font-semibold">1. Veja as ofertas</h3>
+          <p class="text-sm text-white/70 mt-1">Ofertas garimpadas diariamente com origem, destino, datas e preço.</p>
+        </div>
+        <div>
+          <div class="w-10 h-10 rounded-xl bg-[#F9A521] flex items-center justify-center mb-3 text-[#1E3145]"><i data-lucide="armchair" class="w-5 h-5"></i></div>
+          <h3 class="font-display font-semibold">2. Escolha e consulte</h3>
+          <p class="text-sm text-white/70 mt-1">Clique em “Consultar no WhatsApp” — mensagem pronta com detalhes.</p>
+        </div>
+        <div>
+          <div class="w-10 h-10 rounded-xl bg-[#25D366] flex items-center justify-center mb-3 text-white"><i data-lucide="message-circle" class="w-5 h-5"></i></div>
+          <h3 class="font-display font-semibold">3. Feche no WhatsApp</h3>
+          <p class="text-sm text-white/70 mt-1">Atendimento humano em até 2 min. Sem taxa, sem cadastro.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="border-t border-slate-200 bg-white">
+    <div class="max-w-[1280px] mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-slate-500">
+      <span>© 2026 <strong class="text-[#1E3145]">Vou com Milhas</strong> • Instagram <a href="https://www.instagram.com/vou_com_milhas" class="text-sky-600 hover:underline">@vou_com_milhas</a> • WhatsApp <strong class="text-slate-800">84 99987-9071</strong></span>
+      <span class="inline-flex items-center gap-1.5"><i data-lucide="shield" class="w-4 h-4"></i> Compra segura • CNPJ 00.000.000/0001-00</span>
+    </div>
+  </footer>
+
+  <!-- WhatsApp Floating -->
+  <a href="https://wa.me/5584998979071?text=Ol%C3%A1%20vim%20pelo%20site%20Vou%20com%20Milhas%20e%20quero%20consultar%20oferta" target="_blank" class="fixed bottom-5 right-5 z-40 w-14 h-14 rounded-full bg-[#25D366] text-white flex items-center justify-center shadow-[0_8px_24px_rgba(37,211,102,0.4)] hover:scale-105 transition">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M19.05 4.94A9.82 9.82 0 0 0 12.04 2a9.82 9.82 0 0 0-8.5 14.82L2 22l5.3-1.39A9.82 9.82 0 0 0 12.04 22a9.82 9.82 0 0 0 9.82-9.82 9.76 9.76 0 0 0-2.81-7.24Zm-7.01 13.7a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.15.83.84-3.07-.2-.32a8.2 8.2 0 0 1-1.26-4.37A8.2 8.2 0 0 1 12.04 3.6a8.2 8.2 0 0 1 8.2 8.2 8.2 8.2 0 0 1-8.2 8.84Zm4.52-6.15c-.25-.12-1.47-.73-1.7-.81s-.39-.12-.56.12-.64.81-.79.97-.29.19-.54.06a6.86 6.86 0 0 1-2-1.24 7.56 7.56 0 0 1-1.4-1.73c-.15-.25 0-.39.11-.51s.25-.29.37-.43a1.66 1.66 0 0 0 .25-.41.46.46 0 0 0 0-.43c0-.12-.56-1.35-.77-1.85s-.41-.43-.56-.44h-.48a.9.9 0 0 0-.66.31 2.77 2.77 0 0 0-.86 2.05 4.8 4.8 0 0 0 1 2.57 11 11 0 0 0 4.2 3.71 14.1 14.1 0 0 0 1.4.52 3.36 3.36 0 0 0 1.53.1 2.5 2.5 0 0 0 1.64-1.15.2.2 0 0 0 0-.2c-.06-.1-.25-.16-.5-.28Z"/></svg>
+  </a>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+  <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/animations.js"></script>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

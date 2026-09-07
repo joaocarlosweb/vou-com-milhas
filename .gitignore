@@ -1,0 +1,26 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Env & secrets - NÃO commitar
+.env
+.env.local
+.env.production
+SENHA_ADMIN.txt
+.vercel/
+
+# Logs
+*.log
+
+# Opcional: se prefere não versionar vídeo grande, descomente
+# assets/video/hero.mp4
+
+# Opcional: se admin deve ser só local, descomente para não subir painel
+# admin.html
+# assets/js/admin.js

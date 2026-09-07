@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Selecionar Assentos — Viaje Fácil Executivo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{display:['Outfit','sans-serif']}, colors:{cabin:{900:'#0f172a',800:'#1e293b',700:'#334155'}}}}}</script>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script src="https://unpkg.com/lucide@0.511.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-page="detalhes" class="bg-[#f8fafc] text-slate-800 antialiased selection:bg-emerald-200">
+
+  <!-- NAV DARK GLASS -->
+  <nav class="sticky top-0 z-40 bg-[#0f172a]/85 backdrop-blur-xl border-b border-white/10">
+    <div class="max-w-[1220px] mx-auto px-4 sm:px-6 h-[64px] flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-3">
+        <img src="assets/img/logo-voucommilhas.jpg" alt="Vou com Milhas" class="w-9 h-9 rounded-xl object-contain bg-white p-1 border border-white/20 shadow" onerror="this.style.display='none'">
+        <span class="font-display font-bold text-white"><span class="text-[#F9A521]">VOU COM</span> <span class="text-white">MILHAS</span></span>
+        <span class="hidden sm:inline-flex ml-2 px-2.5 py-1 rounded-full bg-sky-500 text-white text-[11px] font-bold tracking-widest">VOO</span>
+      </a>
+      <div class="flex items-center gap-2">
+        <a href="index.html" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/10 border border-white/10 text-white text-sm font-medium hover:bg-white/15 transition">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i> Ofertas
+        </a>
+        <a href="https://wa.me/5584998979071" target="_blank" class="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#25D366] text-white text-sm font-semibold shadow-[0_4px_16px_rgba(37,211,102,0.3)]"> <i data-lucide="headset" class="w-4 h-4"></i> Suporte</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- STEPS AVIÃO -->
+  <div class="bg-[#0f172a] border-b border-white/5">
+    <div class="max-w-[1220px] mx-auto px-4 sm:px-6 py-3 flex items-center gap-3 text-xs">
+      <span class="inline-flex items-center gap-2 text-sky-400 font-semibold"><span class="w-6 h-6 rounded-full bg-sky-500 text-white flex items-center justify-center text-xs font-bold"><i data-lucide="plane" class="w-3 h-3"></i></span> Avião • Voo direto</span>
+      <span class="w-8 h-px bg-white/10 hidden sm:block"></span>
+      <span class="inline-flex items-center gap-2 text-white/70"><span class="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold">✓</span> Consultar no WhatsApp</span>
+      <span class="ml-auto hidden sm:inline-flex items-center gap-1.5 text-white/50"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Emissão com milhas</span>
+    </div>
+  </div>
+
+  <main id="detalhes-container" class="max-w-[1220px] mx-auto px-4 sm:px-6 py-6">
+    <!-- HERO AVIÃO -->
+    <div class="detalhes-hero relative overflow-hidden rounded-[28px] bg-[#0f172a] border border-white/10 shadow-[0_24px_64px_rgba(0,0,0,0.3)]">
+      <div class="absolute inset-0">
+        <img id="detalhes-imagem" src="" alt="Voo" class="w-full h-full object-cover opacity-50">
+        <div class="absolute inset-0 bg-gradient-to-r from-[#0f172a] via-[#0f172a]/80 to-[#0f172a]/40"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+        <!-- ambient glow -->
+        <div class="absolute -right-20 -top-20 w-[380px] h-[380px] rounded-full bg-sky-500/20 blur-[80px]"></div>
+        <div class="absolute -left-20 -bottom-20 w-[300px] h-[300px] rounded-full bg-[#F9A521]/10 blur-[60px]"></div>
+      </div>
+      <div class="relative grid md:grid-cols-[1.4fr_0.7fr] gap-6 p-6 sm:p-8">
+        <div>
+          <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur border border-white/10 text-white text-xs font-semibold">
+            <span class="w-2 h-2 rounded-full bg-sky-400 animate-pulse"></span> <i data-lucide="plane" class="w-3 h-3"></i> VOO • EMISSÃO COM MILHAS
+          </div>
+          <div id="detalhes-rota" class="font-display font-[800] text-white text-[28px] sm:text-[36px] leading-none mt-3 tracking-tight">— → —</div>
+          <div id="detalhes-data" class="text-white/70 text-sm mt-2 flex flex-wrap items-center gap-2"><i data-lucide="calendar" class="w-4 h-4"></i> —</div>
+          <div id="detalhes-empresa" class="inline-flex mt-3 px-3 py-1.5 rounded-full bg-white text-slate-900 text-xs font-bold shadow">—</div>
+          <div class="mt-6 flex flex-wrap gap-3">
+            <div class="rounded-2xl bg-white/10 backdrop-blur border border-white/10 px-4 py-3 min-w-[110px]">
+              <div class="text-[11px] tracking-widest uppercase font-semibold text-white/50">Duração</div>
+              <div id="detalhes-duracao" class="font-display font-bold text-white mt-1">—</div>
+            </div>
+            <div class="rounded-2xl bg-white/10 backdrop-blur border border-white/10 px-4 py-3 min-w-[110px]">
+              <div class="text-[11px] tracking-widest uppercase font-semibold text-white/50">Escalas</div>
+              <div id="detalhes-escalas" class="font-display font-bold text-white mt-1">Direto</div>
+            </div>
+            <div class="rounded-2xl bg-white/10 backdrop-blur border border-white/10 px-4 py-3 min-w-[110px]">
+              <div class="text-[11px] tracking-widest uppercase font-semibold text-white/50">Bagagem</div>
+              <div id="detalhes-bagagem" class="font-display font-bold text-white mt-1">23kg</div>
+            </div>
+          </div>
+        </div>
+        <div class="flex flex-col justify-center">
+          <div class="rounded-[20px] bg-white p-5 shadow-[0_16px_40px_rgba(0,0,0,0.2)]">
+            <div class="text-[11px] tracking-widest uppercase font-semibold text-slate-500">A partir de</div>
+            <div class="flex items-baseline gap-2 mt-1">
+              <span id="detalhes-milhas" class="font-display font-[800] text-2xl text-[#1E3145]">— milhas</span>
+            </div>
+            <div class="flex items-baseline gap-2 mt-1">
+              <span id="detalhes-preco" class="font-display font-bold text-lg text-slate-700">R$ —</span>
+              <span class="text-xs text-slate-500">+ taxas</span>
+            </div>
+            <div class="mt-3 flex items-center justify-between">
+              <span id="detalhes-vagas" class="text-sm font-semibold text-emerald-600">Oferta aérea</span>
+              <span class="text-xs text-slate-400">Voo com milhas</span>
+            </div>
+            <div class="mt-4 flex items-center gap-1.5 text-xs text-slate-600"><i data-lucide="plane" class="w-3.5 h-3.5 text-sky-500"></i> Consulte disponibilidade no WhatsApp</div>
+          </div>
+          <div class="mt-3 rounded-2xl bg-[#1E3145] text-white p-3 flex gap-2.5 items-start">
+            <div class="w-8 h-8 rounded-full bg-[#F9A521] text-[#1E3145] flex items-center justify-center shrink-0"><i data-lucide="plane" class="w-4 h-4"></i></div>
+            <div class="text-xs leading-relaxed"><strong>Voo com milhas:</strong> emissão via LATAM Pass / Smiles. Marcação de assento no check-in.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FORM LEAD COMPACTO -->
+    <div class="mt-5 grid md:grid-cols-2 gap-3">
+      <div class="relative flex-1">
+        <i data-lucide="user" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+        <input id="lead-nome" placeholder="Seu nome (para agilizar no WhatsApp)" class="w-full pl-10 pr-4 py-3.5 rounded-2xl bg-white border border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none text-sm shadow-sm">
+      </div>
+      <div class="relative flex-1">
+        <i data-lucide="phone" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+        <input id="lead-telefone" placeholder="Seu WhatsApp (opcional)" class="w-full pl-10 pr-4 py-3.5 rounded-2xl bg-white border border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none text-sm shadow-sm">
+      </div>
+    </div>
+
+    <div class="grid lg:grid-cols-[1.15fr_380px] gap-6 mt-6">
+      <!-- DETALHES VOO (avião) - sem mapa de ônibus -->
+      <div class="bg-white rounded-[28px] border border-slate-200 p-6 shadow-sm">
+        <h2 class="font-display font-bold text-lg flex items-center gap-2"><i data-lucide="plane" class="w-5 h-5 text-[#1E3145]"></i> Detalhes do voo</h2>
+        <p class="text-sm text-slate-600 mt-2">Voo operado com emissão via milhas. Marcação de assento e check-in feitos direto com a cia aérea após confirmação no WhatsApp.</p>
+        <div class="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3 text-center">
+          <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4">
+            <div class="text-[11px] tracking-widest uppercase font-semibold text-slate-500">Bagagem</div>
+            <div id="detalhes-bagagem-card" class="font-bold text-sm mt-1">23kg</div>
+          </div>
+          <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4">
+            <div class="text-[11px] tracking-widest uppercase font-semibold text-slate-500">Escalas</div>
+            <div id="detalhes-escalas-card" class="font-bold text-sm mt-1">Direto</div>
+          </div>
+          <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4">
+            <div class="text-[11px] tracking-widest uppercase font-semibold text-slate-500">Classe</div>
+            <div id="detalhes-classe" class="font-bold text-sm mt-1">Econômica</div>
+          </div>
+        </div>
+        <div class="mt-4 rounded-xl bg-sky-50 border border-sky-200 p-3 flex gap-2">
+          <i data-lucide="info" class="w-5 h-5 text-sky-600 shrink-0"></i>
+          <div class="text-xs leading-relaxed text-sky-900"><strong>Como funciona:</strong> consulte no WhatsApp → confirmamos disponibilidade e milhas → você paga taxas e recebe e-ticket. Sem assento prévio no site.</div>
+        </div>
+        <div class="mt-4 flex gap-2">
+          <div class="flex-1 relative">
+            <i data-lucide="user" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input id="lead-nome" placeholder="Seu nome" class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-sky-500 focus:ring-4 focus:ring-sky-500/10 outline-none text-sm">
+          </div>
+          <div class="flex-1 relative">
+            <i data-lucide="phone" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input id="lead-telefone" placeholder="WhatsApp" class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-sky-500 focus:ring-4 focus:ring-sky-500/10 outline-none text-sm">
+          </div>
+        </div>
+        <!-- Compatibilidade: mantém IDs antigos escondidos para JS -->
+        <div class="hidden">
+          <div class="mapa-container"></div>
+          <div id="mapa-assentos"></div>
+          <span id="resumo-qtd-num">0</span>
+          <span id="hint-selecao"></span>
+          <button id="btn-limpar-assentos"></button>
+        </div>
+      </div>
+
+      <!-- RESUMO AVIÃO -->
+      <div class="resumo-card lg:sticky lg:top-[84px] h-fit space-y-4">
+        <div class="bg-white rounded-[24px] border border-slate-200 p-6 shadow-[0_16px_40px_rgba(0,0,0,0.08)]">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-xl bg-sky-500 text-white flex items-center justify-center"><i data-lucide="plane" class="w-4 h-4"></i></div>
+            <h3 class="font-display font-bold">Resumo do voo</h3>
+            <span class="ml-auto px-2.5 py-1 rounded-full bg-sky-50 text-sky-700 border border-sky-200 text-xs font-bold">Avião</span>
+          </div>
+          <div class="mt-5 space-y-3 text-sm">
+            <div class="flex justify-between items-center"><span class="text-slate-500 flex items-center gap-1.5"><i data-lucide="plane" class="w-3.5 h-3.5"></i> Voo</span><span id="resumo-preco" class="font-semibold">R$ —</span></div>
+            <div class="rounded-2xl bg-[#0f172a] text-white p-4 border border-white/5">
+              <div class="text-[11px] tracking-widest uppercase font-semibold text-white/50">Emissão com milhas</div>
+              <div id="resumo-qtd" class="text-sm font-medium mt-1 text-white">Consulte disponibilidade</div>
+              <div id="resumo-milhas" class="text-xs text-[#F9A521] mt-1 font-bold">— milhas + taxas</div>
+              <div class="text-xs text-white/40 mt-1">Bagagem inclusa • Marcação no check-in</div>
+            </div>
+            <div class="flex justify-between items-center pt-3 border-t border-slate-100">
+              <span class="font-semibold text-slate-700">Taxas</span>
+              <span id="resumo-total" class="font-display font-[800] text-xl text-sky-600">R$ —</span>
+            </div>
+            <div class="text-xs text-slate-400 text-center">Pagamento via Pix • Emissão após confirmação</div>
+          </div>
+
+          <button id="btn-whatsapp" disabled class="mt-5 w-full inline-flex items-center justify-center gap-2 bg-[#25D366] text-white rounded-full py-4 text-[15px] font-bold hover:bg-[#128C7E] transition shadow-[0_8px_24px_rgba(37,211,102,0.35)] opacity-40 cursor-not-allowed disabled:opacity-40">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M19.05 4.94A9.82 9.82 0 0 0 12.04 2a9.82 9.82 0 0 0-8.5 14.82L2 22l5.3-1.39A9.82 9.82 0 0 0 12.04 22a9.82 9.82 0 0 0 9.82-9.82 9.76 9.76 0 0 0-2.81-7.24Zm-7.01 13.7a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.15.83.84-3.07-.2-.32a8.2 8.2 0 0 1-1.26-4.37A8.2 8.2 0 0 1 12.04 3.6a8.2 8.2 0 0 1 8.2 8.2 8.2 8.2 0 0 1-8.2 8.84Zm4.52-6.15c-.25-.12-1.47-.73-1.7-.81s-.39-.12-.56.12-.64.81-.79.97-.29.19-.54.06a6.86 6.86 0 0 1-2-1.24 7.56 7.56 0 0 1-1.4-1.73c-.15-.25 0-.39.11-.51s.25-.29.37-.43a1.66 1.66 0 0 0 .25-.41.46.46 0 0 0 0-.43c0-.12-.56-1.35-.77-1.85s-.41-.43-.56-.44h-.48a.9.9 0 0 0-.66.31 2.77 2.77 0 0 0-.86 2.05 4.8 4.8 0 0 0 1 2.57 11 11 0 0 0 4.2 3.71 14.1 14.1 0 0 0 1.4.52 3.36 3.36 0 0 0 1.53.1 2.5 2.5 0 0 0 1.64-1.15.2.2 0 0 0 0-.2c-.06-.1-.25-.16-.5-.28Z"/></svg>
+            Consultar no WhatsApp
+          </button>
+          <div class="mt-2 text-center text-xs text-slate-500">Mensagem pronta com <strong>84 99987-9071</strong> • Resposta média 90s</div>
+          <div class="mt-3 flex items-center justify-center gap-3 text-xs text-slate-400">
+            <span class="inline-flex items-center gap-1"><i data-lucide="lock" class="w-3 h-3"></i> Seguro</span><span>•</span><span class="inline-flex items-center gap-1"><i data-lucide="badge-check" class="w-3 h-3"></i> Garantido</span><span>•</span><span class="inline-flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> Rápido</span>
+          </div>
+        </div>
+
+        <div class="rounded-[20px] bg-gradient-to-br from-[#0f172a] to-[#1e293b] text-white p-5 border border-white/10">
+          <h4 class="font-display font-semibold text-sm flex items-center gap-2"><span class="w-7 h-7 rounded-xl bg-white/10 flex items-center justify-center"><i data-lucide="crown" class="w-4 h-4 text-amber-400"></i></span> Executivo Viaje Fácil</h4>
+          <ul class="mt-3 space-y-2 text-xs text-white/70">
+            <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400 shrink-0"></i> Poltrona couro ecológico com 140° de reclinação</li>
+            <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400 shrink-0"></i> Cortina privativa + luz de leitura individual</li>
+            <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400 shrink-0"></i> Atendimento humano no WhatsApp até o embarque</li>
+          </ul>
+          <a href="https://wa.me/5584998979071?text=Quero%20ajuda%20executivo" target="_blank" class="mt-4 inline-flex w-full items-center justify-center gap-2 bg-white text-slate-900 rounded-full py-2.5 text-sm font-bold">Falar com concierge</a>
+        </div>
+
+        <a href="index.html" class="inline-flex w-full items-center justify-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-800">← Voltar às ofertas</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="mt-10 border-t border-white/5 bg-[#0f172a]">
+    <div class="max-w-[1220px] mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-white/60">
+      <span>© 2026 <strong class="text-white">Vou com Milhas</strong> • <a href="https://www.instagram.com/vou_com_milhas" class="text-[#F9A521] hover:underline">@vou_com_milhas</a> • WhatsApp 84 99987-9071 • CNPJ 00.000.000/0001-00</span>
+      <span class="inline-flex items-center gap-1.5"><i data-lucide="shield" class="w-4 h-4"></i> Embarque garantido</span>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+  <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/animations.js"></script>
+  <script>
+    lucide.createIcons();
+    document.addEventListener('DOMContentLoaded', () => {
+      const obs = new MutationObserver(() => {
+        const v = window.viagemAtual || window.ofertaAtual;
+        if (v) {
+          const h=document.getElementById('detalhes-hora'), c=document.getElementById('detalhes-chegada'), d=document.getElementById('detalhes-duracao');
+          if(h && v.hora) h.textContent=v.hora;
+          if(c && v.chegada) c.textContent=v.chegada;
+          if(d && v.duracao) d.textContent=v.duracao;
+          if(v) obs.disconnect();
+        }
+      });
+      obs.observe(document.body, { childList: true, subtree: true });
+      setTimeout(()=> {
+        const v = window.viagemAtual || window.ofertaAtual;
+        if(v){
+          const h=document.getElementById('detalhes-hora'), c=document.getElementById('detalhes-chegada'), d=document.getElementById('detalhes-duracao');
+          if(h && v.hora) h.textContent=v.hora;
+          if(c && v.chegada) c.textContent=v.chegada;
+          if(d && v.duracao) d.textContent=v.duracao;
+        }
+      }, 900);
+    });
+  </script>
+</body>
+</html>

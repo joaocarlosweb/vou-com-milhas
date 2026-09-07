@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Oferta — Vou com Milhas</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{display:['Outfit','sans-serif']}}}}</script>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script src="https://unpkg.com/lucide@0.511.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-page="oferta" class="bg-[#f8fafc] text-slate-800 antialiased">
+
+  <nav class="sticky top-0 z-40 bg-white/85 backdrop-blur-xl border-b border-slate-200/60">
+    <div class="max-w-[1100px] mx-auto px-4 sm:px-6 h-[64px] flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2.5">
+        <img src="assets/img/logo-voucommilhas.jpg" alt="Vou com Milhas" class="w-9 h-9 rounded-xl object-contain bg-white border border-slate-200 p-1" onerror="this.style.display='none'">
+        <span class="font-display font-bold text-[16px]"><span class="text-[#F9A521]">VOU COM</span> <span class="text-[#1E3145]">MILHAS</span></span>
+      </a>
+      <div class="flex items-center gap-2">
+        <a href="index.html" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white border border-slate-200 text-sm font-medium hover:bg-slate-50"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</a>
+        <a href="https://www.instagram.com/vou_com_milhas" target="_blank" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-white border border-slate-200 text-sm font-medium"><i data-lucide="instagram" class="w-4 h-4 text-pink-500"></i> Instagram</a>
+      </div>
+    </div>
+  </nav>
+
+  <main id="oferta-container" class="max-w-[1100px] mx-auto px-4 sm:px-6 py-6">
+    <!-- Hero Oferta -->
+    <div class="bg-white rounded-[28px] overflow-hidden border border-slate-200 shadow-sm">
+      <div class="grid md:grid-cols-[1.4fr_0.8fr] gap-0">
+        <div class="relative h-[260px] md:h-[360px] bg-slate-100">
+          <img id="oferta-imagem" src="" alt="Oferta" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80'">
+          <img id="detalhes-imagem" src="" alt="" class="hidden" onerror="this.src='https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80'">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-black/5 to-transparent"></div>
+          <div class="absolute bottom-4 left-4 right-4 text-white">
+            <div id="oferta-rota" class="font-display font-[800] text-2xl sm:text-3xl leading-none">— → —</div>
+            <div id="detalhes-rota" class="hidden"></div>
+            <div id="oferta-datas" class="text-sm text-white/90 mt-1 flex items-center gap-2"><i data-lucide="calendar" class="w-4 h-4"></i> <span>—</span></div>
+            <div id="detalhes-data" class="hidden"></div>
+            <div class="mt-2 flex flex-wrap gap-2">
+              <span id="detalhes-empresa" class="inline-flex px-3 py-1 rounded-full bg-white text-slate-900 text-xs font-bold">—</span>
+              <span id="oferta-validade" class="inline-flex px-3 py-1 rounded-full bg-[#F9A521] text-[#1E3145] text-xs font-bold">⏳ Válida até —</span>
+            </div>
+          </div>
+          <div class="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-white text-xs font-bold shadow flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Oferta Vou com Milhas</div>
+        </div>
+        <div class="p-6 flex flex-col">
+          <div class="text-[11px] tracking-widest uppercase font-semibold text-slate-500">Preço promocional</div>
+          <div class="flex items-baseline gap-2 mt-1">
+            <span id="oferta-preco" class="font-display font-[800] text-3xl text-[#1E3145]">R$ —</span>
+            <span id="detalhes-preco" class="hidden"></span>
+            <span id="oferta-preco-antigo" class="text-sm text-slate-400 line-through"></span>
+          </div>
+          <div class="mt-1 text-xs text-slate-500">Taxas inclusas • Sem taxa de conveniência • Via WhatsApp</div>
+          <div id="oferta-parcelamento-box" class="mt-4 p-4 rounded-2xl bg-slate-50 border border-slate-200">
+            <label class="text-xs font-bold tracking-widest uppercase text-slate-600">💳 Parcelamento</label>
+            <select id="oferta-parcelas-select" class="mt-2 w-full px-3 py-2.5 rounded-xl bg-white border border-slate-300 text-sm font-medium focus:border-[#1E3145] focus:ring-2 focus:ring-[#1E3145]/10 outline-none"></select>
+            <div id="oferta-parcela-valor" class="text-base font-[800] text-[#1E3145] mt-2"></div>
+            <div id="oferta-parcela-total" class="text-xs text-slate-600"></div>
+            <div id="oferta-parcela-juros" class="text-xs text-amber-600 font-medium"></div>
+          </div>
+          
+          <div class="mt-4 rounded-2xl bg-[#1E3145] text-white p-4">
+            <div class="text-[11px] tracking-widest uppercase font-semibold text-white/60">Destaque da oferta</div>
+            <div id="detalhes-vagas" class="font-semibold text-sm mt-1 text-[#F9A521]">—</div>
+            <div id="oferta-descricao" class="text-sm text-white/80 mt-1 leading-relaxed">—</div>
+          </div>
+
+          <div class="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
+            <div class="rounded-xl bg-slate-50 border border-slate-200 p-3">
+              <div class="text-[11px] tracking-widest uppercase font-semibold text-slate-500">Empresa</div>
+              <div class="font-bold text-sm mt-1" id="oferta-empresa">—</div>
+            </div>
+            <div class="rounded-xl bg-slate-50 border border-slate-200 p-3">
+              <div class="text-[11px] tracking-widest uppercase font-semibold text-slate-500">Tipo</div>
+              <div class="font-bold text-sm mt-1" id="oferta-tipo">—</div>
+            </div>
+            <div class="rounded-xl bg-slate-50 border border-slate-200 p-3">
+              <div class="text-[11px] tracking-widest uppercase font-semibold text-slate-500">Duração</div>
+              <div class="font-bold text-sm mt-1" id="oferta-duracao">—</div>
+            </div>
+          </div>
+
+          <button id="btn-consultar-oferta" class="mt-5 w-full inline-flex items-center justify-center gap-2 bg-[#25D366] text-white rounded-full py-4 text-[15px] font-bold hover:bg-[#128C7E] transition shadow-[0_8px_24px_rgba(37,211,102,0.35)]">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M19.05 4.94A9.82 9.82 0 0 0 12.04 2a9.82 9.82 0 0 0-8.5 14.82L2 22l5.3-1.39A9.82 9.82 0 0 0 12.04 22a9.82 9.82 0 0 0 9.82-9.82 9.76 9.76 0 0 0-2.81-7.24Zm-7.01 13.7a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.15.83.84-3.07-.2-.32a8.2 8.2 0 0 1-1.26-4.37A8.2 8.2 0 0 1 12.04 3.6a8.2 8.2 0 0 1 8.2 8.2 8.2 8.2 0 0 1-8.2 8.84Zm4.52-6.15c-.25-.12-1.47-.73-1.7-.81s-.39-.12-.56.12-.64.81-.79.97-.29.19-.54.06a6.86 6.86 0 0 1-2-1.24 7.56 7.56 0 0 1-1.4-1.73c-.15-.25 0-.39.11-.51s.25-.29.37-.43a1.66 1.66 0 0 0 .25-.41.46.46 0 0 0 0-.43c0-.12-.56-1.35-.77-1.85s-.41-.43-.56-.44h-.48a.9.9 0 0 0-.66.31 2.77 2.77 0 0 0-.86 2.05 4.8 4.8 0 0 0 1 2.57 11 11 0 0 0 4.2 3.71 14.1 14.1 0 0 0 1.4.52 3.36 3.36 0 0 0 1.53.1 2.5 2.5 0 0 0 1.64-1.15.2.2 0 0 0 0-.2c-.06-.1-.25-.16-.5-.28Z"/></svg>
+            Consultar no WhatsApp
+          </button>
+          <button id="btn-compartilhar-oferta" type="button" class="mt-2 w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-full bg-white border border-slate-200 text-sm font-medium hover:bg-slate-50"><i data-lucide="share-2" class="w-4 h-4"></i> Compartilhar oferta</button>
+          <button id="btn-copiar-link" type="button" class="hidden">compat</button>
+          <button id="btn-whatsapp" class="hidden">fallback</button>
+          <div class="mt-2 text-center text-xs text-slate-500">Compartilhe em <strong>todas as redes</strong> • WhatsApp, Instagram, Facebook, Telegram e mais • Link copiado automaticamente se o compartilhamento não abrir</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detalhes extras + confiança -->
+    <div class="grid md:grid-cols-[1.2fr_0.8fr] gap-6 mt-6">
+      <div class="bg-white rounded-[24px] border border-slate-200 p-6">
+        <h3 class="font-display font-bold flex items-center gap-2"><i data-lucide="info" class="w-5 h-5 text-[#1E3145]"></i> Sobre esta oferta</h3>
+        <p class="text-sm text-slate-600 mt-2">Promoção garimpada pela <strong>Vou com Milhas</strong>. Valores sujeitos a disponibilidade e alteração sem aviso. Consulte datas exatas, bagagem e taxas diretamente no WhatsApp. Sem integração com fornecedor — atualização manual pela equipe.</p>
+        <div class="mt-4 rounded-xl bg-amber-50 border border-amber-200 p-3 flex gap-2.5">
+          <i data-lucide="clock" class="w-5 h-5 text-amber-600 shrink-0"></i>
+          <div class="text-xs leading-relaxed text-amber-900"><strong>Promoções relâmpago acabam rápido!</strong> Se esta oferta ainda está no feed, está válida. <code class="bg-white px-1 rounded">Vou Com Milhas</code>.</div>
+        </div>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 text-xs"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i> Compra segura</span>
+          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 text-xs"><i data-lucide="badge-percent" class="w-3.5 h-3.5 text-[#F9A521]"></i> Até 40% off com milhas</span>
+          <a href="https://www.instagram.com/vou_com_milhas" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1E3145] text-white text-xs font-semibold"><i data-lucide="instagram" class="w-3.5 h-3.5"></i> Ver no Instagram</a>
+        </div>
+      </div>
+      <div class="bg-[#1E3145] rounded-[24px] p-6 text-white">
+        <h4 class="font-display font-bold flex items-center gap-2"><i data-lucide="headset" class="w-5 h-5 text-[#F9A521]"></i> Fale com a Vou com Milhas</h4>
+        <p class="text-xs text-white/70 mt-1">Atendimento humano • Resposta em até 2 min • Seg a Sáb 07h-22h</p>
+        <div class="mt-4 space-y-2 text-sm">
+          <div class="flex items-center gap-2"><i data-lucide="phone" class="w-4 h-4 text-[#F9A521]"></i> 84 99987-9071 (WhatsApp)</div>
+          <div class="flex items-center gap-2"><i data-lucide="instagram" class="w-4 h-4 text-[#F9A521]"></i> @vou_com_milhas</div>
+          <div class="flex items-center gap-2"><i data-lucide="map-pin" class="w-4 h-4 text-[#F9A521]"></i> Atendimento 100% online</div>
+        </div>
+        <a href="https://wa.me/5584998979071?text=Ol%C3%A1%20preciso%20de%20ajuda%20com%20oferta" target="_blank" class="mt-4 inline-flex w-full items-center justify-center gap-2 bg-white text-[#1E3145] rounded-full py-3 text-sm font-bold">Falar com atendente</a>
+        <a href="index.html" class="mt-3 inline-flex w-full items-center justify-center gap-1.5 text-xs text-white/60 hover:text-white">← Voltar às ofertas</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="mt-10 border-t border-slate-200 bg-white">
+    <div class="max-w-[1100px] mx-auto px-4 sm:px-6 py-6 text-center text-sm text-slate-500">© 2026 Vou com Milhas • Instagram @vou_com_milhas • WhatsApp 84 99987-9071</div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+  <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/animations.js"></script>
+  <script>
+    lucide.createIcons();
+    // Compartilhar oferta - robusto mesmo antes de carregar dados
+    function getOfertaParaCompartilhar(){
+      let v = window.viagemAtual;
+      if(v) return v;
+      // fallback: tenta achar por URL id em window.viagensData / OFERTAS_FALLBACK
+      const id = Number(new URLSearchParams(location.search).get('id'));
+      if(id){
+        if(window.viagensData) v = window.viagensData.find(x=>x.id===id);
+        if(!v && window.ofertasData) v = window.ofertasData.find(x=>x.id===id);
+        if(v) return v;
+        // último fallback: cria objeto mínimo só com id e link
+        return { id, origem:'', destino:'', datas:'', preco:0 };
+      }
+      return null;
+    }
+    function bindCompartilhar(){
+      const btnShare=document.getElementById('btn-compartilhar-oferta');
+      const btnCopyOld=document.getElementById('btn-copiar-link');
+      const handleCompartilhar = async (e)=>{
+        if(e) e.preventDefault();
+        let v = getOfertaParaCompartilhar();
+        if(!v || !v.id){
+          // mostra feedback em vez de falhar silencioso
+          const btn = btnShare || btnCopyOld;
+          if(btn){ const orig=btn.innerHTML; btn.textContent='Carregando oferta...'; setTimeout(()=>{ btn.innerHTML=orig; lucide.createIcons(); },1500); }
+          // tenta aguardar 600ms e tentar de novo (dados ainda carregando)
+          setTimeout(handleCompartilhar, 600);
+          return;
+        }
+        const baseUrl=location.origin + location.pathname.replace('oferta.html','');
+        const link=`${baseUrl}oferta.html?id=${v.id}`;
+        const precoTxt = v.preco ? new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v.preco) : '';
+        const text = v.origem ? `✈️ OFERTA VOU COM MILHAS - ${v.origem}→${v.destino} ${v.datas||''} por ${precoTxt}` : `✈️ OFERTA VOU COM MILHAS - Detalhes:`;
+        const shareData={ title: `Vou com Milhas - ${v.origem||'Oferta'}→${v.destino||''}`, text, url: link };
+        const msgCompleta=`${text} Detalhes: ${link}`;
+        // tenta Web Share API nativa (mostra TODAS as redes)
+        if(navigator.share && (!navigator.canShare || navigator.canShare(shareData))){
+          try{ await navigator.share(shareData); return; } catch(err){ if(err && err.name==='AbortError') return; console.warn('share falhou, fallback',err); }
+        }
+        // fallback desktop: clipboard
+        const fallbackCopy = ()=>{
+          const btn = btnShare || btnCopyOld;
+          window.prompt('Copie o link da oferta para compartilhar onde quiser:', msgCompleta);
+          if(btn){ btn.textContent='✓ Link pronto para copiar'; setTimeout(()=>{ btn.innerHTML='<i data-lucide="share-2" class="w-4 h-4"></i> Compartilhar oferta'; lucide.createIcons(); },2500); }
+        };
+        if(navigator.clipboard && window.isSecureContext){
+          try{ await navigator.clipboard.writeText(msgCompleta); const btn=btnShare||btnCopyOld; if(btn){ btn.textContent='✓ Copiado! Cole onde quiser'; setTimeout(()=>{ btn.innerHTML='<i data-lucide="share-2" class="w-4 h-4"></i> Compartilhar oferta'; lucide.createIcons(); },2500); } return; } catch(_){ fallbackCopy(); return; }
+        }
+        fallbackCopy();
+      };
+      if(btnShare) btnShare.addEventListener('click', handleCompartilhar);
+      if(btnCopyOld) btnCopyOld.addEventListener('click', handleCompartilhar);
+      // expõe para debug
+      window.compartilharOfertaDebug = handleCompartilhar;
+    }
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', bindCompartilhar);
+    else bindCompartilhar();
+  </script>
+</body>
+</html>
