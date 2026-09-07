@@ -99,6 +99,32 @@ async function persistOfertas(){
 function persistConfig(){ localStorage.setItem(LS_CONFIG, JSON.stringify(config)); }
 function persistEmpresa(){ localStorage.setItem(LS_EMPRESA, JSON.stringify(empresa)); }
 
+// Leads globais via Blob (fallback localStorage)
+let leadsCache = null;
+async function fetchLeadsGlobal(){
+  try{
+    const r = await fetch('/api/leads', { credentials: 'include' });
+    if(r.ok){
+      const data = await r.json();
+      if(Array.isArray(data)){
+        leadsCache = data;
+        // mantém LS sincronizado para offline
+        try{ localStorage.setItem(LS_LEADS, JSON.stringify(data)); }catch{}
+        return data;
+      }
+    }
+  }catch(e){ /* fallback */ }
+  try{
+    const ls = JSON.parse(localStorage.getItem(LS_LEADS)||'[]');
+    leadsCache = Array.isArray(ls)? ls : [];
+    return leadsCache;
+  }catch{ return []; }
+}
+function getLeadsSync(){
+  if(leadsCache && Array.isArray(leadsCache)) return leadsCache;
+  try{ return JSON.parse(localStorage.getItem(LS_LEADS)||'[]'); }catch{ return []; }
+}
+
 async function checkAuth(){
   const login=$('#login-screen'), dash=$('#dashboard');
   try {
@@ -106,7 +132,17 @@ async function checkAuth(){
     if(r.ok){
       const data = await r.json();
       if(data.ok){
-        login.classList.add('hidden'); dash.classList.remove('hidden'); renderAll(); return;
+        login.classList.add('hidden'); dash.classList.remove('hidden'); renderAll();
+        // auto-refresh leads globais a cada 15s quando no dashboard
+        if(!window.__leadsInterval){
+          window.__leadsInterval = setInterval(()=> {
+            if(dash.classList.contains('hidden')) return;
+            renderStats();
+            const leadsTab = $('#tab-leads');
+            if(leadsTab && !leadsTab.classList.contains('hidden')) renderLeads();
+          }, 15000);
+        }
+        return;
       }
     }
   } catch {}
@@ -165,6 +201,8 @@ function bindEvents(){
       if(tab==='leads') renderLeads();
       if(tab==='config') renderConfig();
       if(tab==='empresa') renderEmpresaTab();
+      // atualiza stats ao trocar de aba (leads globais podem ter mudado)
+      if(tab==='leads') renderStats();
     });
   });
 
@@ -218,13 +256,13 @@ function bindEvents(){
   $('#btn-copiar-todas')?.addEventListener('click', copiarTodasAtivas);
 }
 
-function renderAll(){ renderStats(); renderOfertas(); renderConfig(); renderEmpresaTab(); renderLeads(); }
+async function renderAll(){ await renderStats(); renderOfertas(); renderConfig(); renderEmpresaTab(); await renderLeads(); }
 
-function renderStats(){
+async function renderStats(){
   const ativas=ofertas.filter(isAtiva).length;
   const encerradas=ofertas.length - ativas;
   const destaques=ofertas.filter(o=>o.destaque && isAtiva(o)).length;
-  const leads=JSON.parse(localStorage.getItem(LS_LEADS)||'[]');
+  const leads=await fetchLeadsGlobal();
   const hoje=new Date().toISOString().slice(0,10);
   const leadsHoje=leads.filter(l=> (l.createdAt||'').slice(0,10)===hoje).length;
   $('#stat-ativas').textContent=ativas;
@@ -312,18 +350,21 @@ function renderEmpresaTab(){
   $('#emp-preview-link').textContent=empresa.instagramUrl||'https://www.instagram.com/vou_com_milhas';
   $('#emp-preview-link').href=empresa.instagramUrl||'https://www.instagram.com/vou_com_milhas';
 }
-function renderLeads(){
+async function renderLeads(){
   const container=$('#lista-leads'); if(!container) return;
-  const leads=JSON.parse(localStorage.getItem(LS_LEADS)||'[]').slice().reverse();
+  const leadsRaw = await fetchLeadsGlobal();
+  const leads=leadsRaw.slice().reverse();
   $('#leads-count').textContent=`${leads.length} leads`;
   if(leads.length===0){ container.innerHTML=`<div class="py-10 text-center text-slate-500 text-sm">Nenhum lead ainda. Quando cliente clicar em Consultar no WhatsApp, aparece aqui.</div>`; return; }
   container.innerHTML=leads.map(l=>{
-    const d=new Date(l.createdAt); const dataStr=d.toLocaleString('pt-BR');
+    const d=new Date(l.createdAt); const dataStr=!isNaN(d)? d.toLocaleString('pt-BR') : (l.createdAt||'');
+    const tel = l.telefone? ` • 📞 ${l.telefone}` : '';
+    const assentos = l.assentos? ` • 💺 ${l.assentos}` : '';
     const msg=`Olá ${l.nome||''}! Vi seu interesse em ${l.rota||l.ofertaId} Datas ${l.datas||''}. Posso confirmar?`;
     return `<div class="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div class="flex-1 min-w-0">
-        <div class="font-semibold text-sm truncate">${l.rota||'Oferta #'+l.ofertaId} • ${l.datas||''} • ${l.preco||''}</div>
-        <div class="text-xs text-slate-500 truncate">${l.nome?`👤 ${l.nome}`:'👤 Sem nome'} • ${dataStr}</div>
+        <div class="font-semibold text-sm truncate">${l.rota||'Oferta #'+(l.ofertaId||l.viagemId)} • ${l.datas||l.data||''} • ${l.preco||''}${assentos}</div>
+        <div class="text-xs text-slate-500 truncate">${l.nome?`👤 ${l.nome}`:'👤 Sem nome'}${tel} • ${dataStr}</div>
       </div>
       <div class="flex gap-2 shrink-0">
         <a href="https://wa.me/${config.whatsapp}?text=${encodeURIComponent(msg)}" target="_blank" class="px-3 py-2 rounded-full bg-[#25D366] text-white text-xs font-semibold inline-flex items-center gap-1"><i data-lucide="message-circle" class="w-3.5 h-3.5"></i> Responder</a>
@@ -547,7 +588,17 @@ async function resetar(){
 }
 async function limparLeads(){
   if(!confirm('Limpar histórico de leads?')) return;
-  localStorage.removeItem(LS_LEADS); renderLeads(); renderStats(); toast('Leads limpos','info');
+  try{
+    const r = await fetch('/api/leads', { method:'DELETE', credentials:'include' });
+    if(r.ok){
+      leadsCache = [];
+      localStorage.removeItem(LS_LEADS);
+      await renderLeads(); await renderStats();
+      toast('Leads limpos (Blob)','info');
+      return;
+    }
+  }catch(e){}
+  localStorage.removeItem(LS_LEADS); leadsCache=[]; await renderLeads(); await renderStats(); toast('Leads limpos (local)','info');
 }
 function toast(msg,type='info'){
   let el=$('#toast');

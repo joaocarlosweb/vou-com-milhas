@@ -452,11 +452,18 @@ function consultarOferta(id, parcelasEscolhidasParam){
     `${parcelaTxt?`💳 Parcelado em ${parcelaTxt} • `:''}⏳ Validade: ${o.validadeAte?formatData(o.validadeAte):'enquanto durar'}%0A`+
     `🎫 Oferta #${o.id}%0A%0A`+
     `Pode confirmar disponibilidade?`;
-  // lead
+  // lead - local + Blob global
+  const leadPayload = { ofertaId:o.id, rota:`${o.origem}→${o.destino}`, datas:o.datas, preco:formatPreco(o.preco), createdAt:new Date().toISOString() };
   try{
     const leads=JSON.parse(localStorage.getItem('vf_leads')||'[]');
-    leads.push({ id:Date.now(), ofertaId:o.id, rota:`${o.origem}→${o.destino}`, datas:o.datas, preco:formatPreco(o.preco), createdAt:new Date().toISOString() });
+    leads.push({ id:Date.now(), ...leadPayload });
     localStorage.setItem('vf_leads', JSON.stringify(leads));
+  }catch(_){}
+  // envia para Blob (global) - não bloqueia WhatsApp
+  try{
+    const nomeLead = ($('#lead-nome')?.value||'').trim();
+    const telLead = ($('#lead-telefone')?.value||'').trim();
+    fetch('/api/leads', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({...leadPayload, nome:nomeLead, telefone:telLead}) }).catch(()=>{});
   }catch(_){}
   window.open(`https://wa.me/${whatsapp}?text=${msg}`,'_blank');
   toast('Abrindo WhatsApp com a oferta!','success');
@@ -747,6 +754,10 @@ function comprarViaWhatsapp(){
     leads.push({ id:Date.now(), viagemId:v.id, rota:`${v.origem}→${v.destino}`, data:v.data, hora:v.hora, assentos:assentosStr, qtd, total, nome, telefone, createdAt:new Date().toISOString() });
     localStorage.setItem('vf_leads', JSON.stringify(leads));
   }catch(e){}
+  // envia para Blob global
+  try{
+    fetch('/api/leads', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ofertaId:v.id, viagemId:v.id, rota:`${v.origem}→${v.destino}`, datas:v.data?`${v.data} ${v.hora||''}`.trim():v.datas||'', preco:total, nome, telefone, assentos:assentosStr, qtd, createdAt:new Date().toISOString() }) }).catch(()=>{});
+  }catch(_){}
   window.open(`https://wa.me/${whatsapp}?text=${msg}`,'_blank');
   toast('Abrindo WhatsApp!','success');
 }
