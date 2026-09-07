@@ -20,7 +20,8 @@ async function getLeadsFromBlobOrFile() {
       const blobs = await list({ prefix: 'leads.json', token });
       const item = blobs.blobs?.find(b => b.pathname === 'leads.json');
       if (item?.url) {
-        const resp = await fetch(item.url, { cache: 'no-store' });
+        const bustUrl = item.url + (item.url.includes('?') ? '&' : '?') + 't=' + Date.now();
+        const resp = await fetch(bustUrl, { cache: 'no-store' });
         if (resp.ok) {
           const data = await resp.json();
           if (Array.isArray(data)) return data;
