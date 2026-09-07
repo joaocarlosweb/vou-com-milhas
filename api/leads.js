@@ -46,31 +46,25 @@ async function saveLeads(leads) {
   const payload = JSON.stringify(leads, null, 2);
   try {
     const token = process.env.BLOB_READ_WRITE_TOKEN;
-    if (token) {
-      await put('leads.json', payload, {
-        access: 'public',
-        contentType: 'application/json',
-        addRandomSuffix: false,
-        token
-      });
-      // também tenta gravar local dev para debug, ignora erro em prod (read-only)
-      try {
-        const filePath = path.join(process.cwd(), 'data', 'leads.json');
-        fs.writeFileSync(filePath, payload, 'utf-8');
-      } catch {}
-      return true;
+    if (!token) {
+      console.error('saveLeads: BLOB_READ_WRITE_TOKEN ausente');
+      throw new Error('BLOB_READ_WRITE_TOKEN ausente');
     }
+    await put('leads.json', payload, {
+      access: 'public',
+      contentType: 'application/json',
+      addRandomSuffix: false,
+      token
+    });
+    // também tenta gravar local dev para debug, ignora erro em prod (read-only)
+    try {
+      const filePath = path.join(process.cwd(), 'data', 'leads.json');
+      fs.writeFileSync(filePath, payload, 'utf-8');
+    } catch {}
+    return { ok: true };
   } catch (e) {
-    console.error('Erro ao salvar leads no Blob', e);
-  }
-  // fallback fs (dev)
-  try {
-    const filePath = path.join(process.cwd(), 'data', 'leads.json');
-    fs.writeFileSync(filePath, payload, 'utf-8');
-    return true;
-  } catch (err) {
-    console.error('Erro fallback fs leads', err);
-    return false;
+    console.error('Erro ao salvar leads no Blob', e.message, e);
+    return { ok: false, error: e.message };
   }
 }
 
@@ -123,15 +117,15 @@ module.exports = async (req, res) => {
     leads.push(novo);
     // limita a 5000 leads para não estourar Blob (opcional)
     if (leads.length > 5000) leads.splice(0, leads.length - 5000);
-    const ok = await saveLeads(leads);
-    if (!ok) return res.status(500).json({ error: 'Falha ao salvar lead' });
+    const result = await saveLeads(leads);
+    if (!result.ok) return res.status(500).json({ error: 'Falha ao salvar lead', detail: result.error });
     return res.status(201).json({ ok: true, id: novo.id });
   }
 
   if (req.method === 'DELETE') {
     if (!verifyAuth(req)) return res.status(401).json({ error: 'Não autorizado' });
-    const ok = await saveLeads([]);
-    if (!ok) return res.status(500).json({ error: 'Falha ao limpar' });
+    const result = await saveLeads([]);
+    if (!result.ok) return res.status(500).json({ error: 'Falha ao limpar', detail: result.error });
     return res.status(200).json({ ok: true });
   }
 
