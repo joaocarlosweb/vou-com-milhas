@@ -56,6 +56,7 @@ async function saveLeads(leads) {
       contentType: 'application/json',
       addRandomSuffix: false,
       allowOverwrite: true,
+      cacheControlMaxAge: 0,
       token
     });
     // também tenta gravar local dev para debug, ignora erro em prod (read-only)
