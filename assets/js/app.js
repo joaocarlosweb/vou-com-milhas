@@ -459,11 +459,18 @@ function consultarOferta(id, parcelasEscolhidasParam){
     leads.push({ id:Date.now(), ...leadPayload });
     localStorage.setItem('vf_leads', JSON.stringify(leads));
   }catch(_){}
-  // envia para Blob (global) - não bloqueia WhatsApp
+  // envia para Blob (global) - usa sendBeacon/keepalive para não abortar ao abrir WhatsApp no mobile
   try{
     const nomeLead = ($('#lead-nome')?.value||'').trim();
     const telLead = ($('#lead-telefone')?.value||'').trim();
-    fetch('/api/leads', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({...leadPayload, nome:nomeLead, telefone:telLead}) }).catch(()=>{});
+    const payload = JSON.stringify({...leadPayload, nome:nomeLead, telefone:telLead});
+    let sent = false;
+    if(navigator.sendBeacon){
+      try{ sent = navigator.sendBeacon('/api/leads', new Blob([payload], {type:'application/json'})); }catch(_){ sent=false; }
+    }
+    if(!sent){
+      fetch('/api/leads', { method:'POST', headers:{'Content-Type':'application/json'}, body: payload, keepalive:true }).catch(()=>{});
+    }
   }catch(_){}
   window.open(`https://wa.me/${whatsapp}?text=${msg}`,'_blank');
   toast('Abrindo WhatsApp com a oferta!','success');
@@ -754,9 +761,12 @@ function comprarViaWhatsapp(){
     leads.push({ id:Date.now(), viagemId:v.id, rota:`${v.origem}→${v.destino}`, data:v.data, hora:v.hora, assentos:assentosStr, qtd, total, nome, telefone, createdAt:new Date().toISOString() });
     localStorage.setItem('vf_leads', JSON.stringify(leads));
   }catch(e){}
-  // envia para Blob global
+  // envia para Blob global - sendBeacon/keepalive para não abortar no mobile
   try{
-    fetch('/api/leads', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ofertaId:v.id, viagemId:v.id, rota:`${v.origem}→${v.destino}`, datas:v.data?`${v.data} ${v.hora||''}`.trim():v.datas||'', preco:total, nome, telefone, assentos:assentosStr, qtd, createdAt:new Date().toISOString() }) }).catch(()=>{});
+    const payload2 = JSON.stringify({ ofertaId:v.id, viagemId:v.id, rota:`${v.origem}→${v.destino}`, datas:v.data?`${v.data} ${v.hora||''}`.trim():v.datas||'', preco:total, nome, telefone, assentos:assentosStr, qtd, createdAt:new Date().toISOString() });
+    let sent2=false;
+    if(navigator.sendBeacon){ try{ sent2=navigator.sendBeacon('/api/leads', new Blob([payload2],{type:'application/json'})); }catch(_){ sent2=false; } }
+    if(!sent2){ fetch('/api/leads', { method:'POST', headers:{'Content-Type':'application/json'}, body: payload2, keepalive:true }).catch(()=>{}); }
   }catch(_){}
   window.open(`https://wa.me/${whatsapp}?text=${msg}`,'_blank');
   toast('Abrindo WhatsApp!','success');

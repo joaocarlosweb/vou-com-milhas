@@ -103,7 +103,7 @@ function persistEmpresa(){ localStorage.setItem(LS_EMPRESA, JSON.stringify(empre
 let leadsCache = null;
 async function fetchLeadsGlobal(){
   try{
-    const r = await fetch('/api/leads', { credentials: 'include' });
+    const r = await fetch('/api/leads?t='+Date.now(), { credentials: 'include', cache: 'no-store' });
     if(r.ok){
       const data = await r.json();
       if(Array.isArray(data)){
@@ -141,6 +141,12 @@ async function checkAuth(){
             const leadsTab = $('#tab-leads');
             if(leadsTab && !leadsTab.classList.contains('hidden')) renderLeads();
           }, 15000);
+          // atualiza ao voltar para a aba do navegador
+          document.addEventListener('visibilitychange', ()=>{
+            if(document.visibilityState==='visible' && !dash.classList.contains('hidden')){
+              renderStats(); const lt=$('#tab-leads'); if(lt && !lt.classList.contains('hidden')) renderLeads();
+            }
+          });
         }
         return;
       }
