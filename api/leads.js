@@ -91,6 +91,8 @@ module.exports = async (req, res) => {
 
   if (req.method === 'GET') {
     if (!verifyAuth(req)) return res.status(401).json({ error: 'Não autorizado' });
+    res.setHeader('Cache-Control', 'no-store, max-age=0, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
     const leads = await getLeadsFromBlobOrFile();
     return res.status(200).json(leads);
   }
