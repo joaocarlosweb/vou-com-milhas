@@ -82,16 +82,27 @@ module.exports = async (req, res) => {
   }
 
   if (req.method === 'POST') {
-    // POST público (cliente deslogado) com rate limit simples opcional
+    // POST público (cliente deslogado) - suporta JSON, Buffer (sendBeacon) e string
     let body = req.body;
-    if (!body || typeof body === 'string') {
-      body = await new Promise(resolve => {
-        let data = '';
-        req.on('data', chunk => data += chunk);
-        req.on('end', () => {
-          try { resolve(JSON.parse(data || '{}')); } catch { resolve({}); }
+    if (!body || typeof body === 'string' || Buffer.isBuffer(body)) {
+      // Se for Buffer (sendBeacon), converte para string
+      if (Buffer.isBuffer(body)) {
+        try { body = JSON.parse(body.toString('utf-8') || '{}'); } catch { body = {}; }
+      } else {
+        body = await new Promise(resolve => {
+          let data = '';
+          // Se body já é string parcial, usa como inicial
+          if (typeof body === 'string' && body) data = body;
+          req.on('data', chunk => data += chunk);
+          req.on('end', () => {
+            try { resolve(JSON.parse(data || '{}')); } catch { resolve({}); }
+          });
+          // Se req já terminou (body vazio), resolve imediatamente
+          if (req.readableEnded) {
+            try { resolve(JSON.parse(data || '{}')); } catch { resolve({}); }
+          }
         });
-      });
+      }
     }
     if (!body || typeof body !== 'object' || Array.isArray(body)) {
       return res.status(400).json({ error: 'Body inválido' });
