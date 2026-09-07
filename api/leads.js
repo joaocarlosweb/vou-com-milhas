@@ -17,12 +17,17 @@ async function getLeadsFromBlobOrFile() {
   const tryFetch = async (url) => {
     try {
       const bustUrl = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
-      const resp = await fetch(bustUrl, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } });
+      const resp = await fetch(bustUrl);
       if (resp.ok) {
-        const data = await resp.json();
-        if (Array.isArray(data)) return data;
+        const text = await resp.text();
+        try {
+          const data = JSON.parse(text);
+          if (Array.isArray(data)) return data;
+        } catch {}
       }
-    } catch {}
+    } catch (e) {
+      console.warn('tryFetch falhou', url, e.message);
+    }
     return null;
   };
   try {
