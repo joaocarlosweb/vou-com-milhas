@@ -13,19 +13,31 @@ function verifyAuth(req) {
 }
 
 async function getLeadsFromBlobOrFile() {
-  // tenta Blob primeiro
+  // tenta Blob primeiro - direct fetch com bust + list fallback
+  const tryFetch = async (url) => {
+    try {
+      const bustUrl = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
+      const resp = await fetch(bustUrl, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } });
+      if (resp.ok) {
+        const data = await resp.json();
+        if (Array.isArray(data)) return data;
+      }
+    } catch {}
+    return null;
+  };
   try {
     const token = process.env.BLOB_READ_WRITE_TOKEN;
     if (token) {
+      // tenta URL direta conhecida (store_obl32ZeDQvcAfVwK) primeiro para evitar list cache
+      const directUrl = 'https://obl32zedqvcafvwk.public.blob.vercel-storage.com/leads.json';
+      let data = await tryFetch(directUrl);
+      if (data) return data;
+      // fallback list
       const blobs = await list({ prefix: 'leads.json', token });
       const item = blobs.blobs?.find(b => b.pathname === 'leads.json');
       if (item?.url) {
-        const bustUrl = item.url + (item.url.includes('?') ? '&' : '?') + 't=' + Date.now();
-        const resp = await fetch(bustUrl, { cache: 'no-store' });
-        if (resp.ok) {
-          const data = await resp.json();
-          if (Array.isArray(data)) return data;
-        }
+        data = await tryFetch(item.url);
+        if (data) return data;
       }
     }
   } catch (e) {
