@@ -782,10 +782,59 @@ function toast(msg, type='info'){
   el._t=setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translate(-50%, 10px)'; },3000);
 }
 
+// Handler global para QUALQUER clique em wa.me (header, floating, detalhes) - garante lead de qualquer dispositivo
+function trackWhatsAppLead(payloadExtra = {}) {
+  try {
+    const basePayload = {
+      rota: payloadExtra.rota || 'WhatsApp Geral',
+      datas: payloadExtra.datas || '',
+      preco: payloadExtra.preco || '',
+      ofertaId: payloadExtra.ofertaId || null,
+      origem: payloadExtra.origem || location.pathname + location.search,
+      tipo: payloadExtra.tipo || 'whatsapp-geral',
+      nome: ($('#lead-nome')?.value || '').trim(),
+      telefone: ($('#lead-telefone')?.value || '').trim(),
+      createdAt: new Date().toISOString()
+    };
+    // local fallback
+    try {
+      const leads = JSON.parse(localStorage.getItem('vf_leads') || '[]');
+      leads.push({ id: Date.now(), ...basePayload });
+      localStorage.setItem('vf_leads', JSON.stringify(leads));
+    } catch {}
+    const payload = JSON.stringify(basePayload);
+    let sent = false;
+    if (navigator.sendBeacon) {
+      try { sent = navigator.sendBeacon('/api/leads', new Blob([payload], { type: 'application/json' })); } catch { sent = false; }
+    }
+    if (!sent) {
+      fetch('/api/leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload, keepalive: true }).catch(() => {});
+    }
+  } catch {}
+}
+
+function bindGlobalWhatsAppTracking() {
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href*="wa.me"]');
+    if (!a) return;
+    // não interfere se for o botão de oferta que já tem consultarOferta (evita duplicar)
+    if (a.closest('[onclick*="consultarOferta"]') || a.id === 'btn-consultar-oferta' || a.id === 'btn-whatsapp') return;
+    const href = a.getAttribute('href') || '';
+    const isFloating = a.classList.contains('fixed');
+    const isHeader = !isFloating && a.textContent.includes('WhatsApp');
+    trackWhatsAppLead({
+      rota: isFloating ? 'WhatsApp Flutuante' : isHeader ? 'WhatsApp Header' : 'WhatsApp Link',
+      origem: location.pathname,
+      tipo: 'whatsapp-geral'
+    });
+  }, true);
+}
+
 // Auto-init robusto
 function safeInit(){
   if(document.body.dataset.page==='index') initIndex();
   if(document.body.dataset.page==='detalhes' || document.body.dataset.page==='oferta') initDetalhes();
+  bindGlobalWhatsAppTracking();
 }
 if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', safeInit); } else { safeInit(); }
 // watchdog único já em initIndex (1000ms) — removido duplicata para evitar triple-render e Forced reflow

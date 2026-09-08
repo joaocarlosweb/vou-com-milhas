@@ -128,22 +128,22 @@ module.exports = async (req, res) => {
     if (!body || typeof body !== 'object' || Array.isArray(body)) {
       return res.status(400).json({ error: 'Body inválido' });
     }
-    // validação mínima
-    if (!body.ofertaId && !body.viagemId) {
-      return res.status(400).json({ error: 'ofertaId ou viagemId obrigatório' });
-    }
+    // validação mínima - agora ofertaId opcional para capturar cliques genéricos (header/floating)
+    // Se não tem ofertaId, cria lead genérico com origem da URL/referer
     const leads = await getLeadsFromBlobOrFile();
     const novo = {
       id: Date.now(),
-      ofertaId: body.ofertaId || body.viagemId,
-      viagemId: body.viagemId || body.ofertaId,
-      rota: body.rota || '',
+      ofertaId: body.ofertaId || body.viagemId || null,
+      viagemId: body.viagemId || body.ofertaId || null,
+      rota: body.rota || body.origem || 'WhatsApp Geral',
       datas: body.datas || body.data || '',
       preco: body.preco || '',
       nome: (body.nome || '').toString().slice(0, 80),
       telefone: (body.telefone || '').toString().slice(0, 20),
       assentos: body.assentos || '',
       qtd: body.qtd || 1,
+      origem: body.origem || req.headers['referer'] || req.headers['origin'] || 'site',
+      tipo: body.tipo || (body.ofertaId ? 'oferta' : 'whatsapp-geral'),
       createdAt: new Date().toISOString(),
       ip: req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.headers['x-real-ip'] || ''
     };
