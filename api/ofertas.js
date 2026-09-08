@@ -1,4 +1,4 @@
-const { put, head } = require('@vercel/blob');
+const { put, list } = require('@vercel/blob');
 const jwt = require('jsonwebtoken');
 const cookie = require('cookie');
 const fs = require('fs');
@@ -13,15 +13,40 @@ function verifyAuth(req) {
 }
 
 async function getOfertasFromBlobOrFile() {
-  // tenta Blob primeiro
+  // tenta Blob primeiro (global) - direct URL + list fallback, com cache bust
+  const tryFetch = async (url) => {
+    try {
+      const bustUrl = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
+      const resp = await fetch(bustUrl);
+      if (resp.ok) {
+        const text = await resp.text();
+        try {
+          const data = JSON.parse(text);
+          if (Array.isArray(data)) return data;
+        } catch {}
+      }
+    } catch (e) {
+      console.warn('tryFetch ofertas falhou', url, e.message);
+    }
+    return null;
+  };
   try {
     const token = process.env.BLOB_READ_WRITE_TOKEN;
     if (token) {
-      // Vercel Blob não tem list direto sem client, tentamos fetch do arquivo público se existir
-      // Fallback: lê do arquivo local data/ofertas.json
+      const directUrl = 'https://obl32zedqvcafvwk.public.blob.vercel-storage.com/ofertas.json';
+      let data = await tryFetch(directUrl);
+      if (data) return data;
+      const blobs = await list({ prefix: 'ofertas.json', token });
+      const item = blobs.blobs?.find(b => b.pathname === 'ofertas.json');
+      if (item?.url) {
+        data = await tryFetch(item.url);
+        if (data) return data;
+      }
     }
-  } catch {}
-  // fallback arquivo local
+  } catch (e) {
+    console.warn('Blob read ofertas falhou, fallback file', e.message);
+  }
+  // fallback arquivo local (dev ou seed)
   try {
     const filePath = path.join(process.cwd(), 'data', 'ofertas.json');
     const data = fs.readFileSync(filePath, 'utf-8');
@@ -38,6 +63,8 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   if (req.method === 'GET') {
+    res.setHeader('Cache-Control', 'no-store, max-age=0, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
     const ofertas = await getOfertasFromBlobOrFile();
     return res.status(200).json(ofertas);
   }
@@ -67,6 +94,7 @@ module.exports = async (req, res) => {
           contentType: 'application/json',
           addRandomSuffix: false,
           allowOverwrite: true,
+          cacheControlMaxAge: 0,
           token
         });
       } else {

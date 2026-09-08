@@ -110,24 +110,41 @@ function normalizarOferta(v) {
   };
 }
 
-// Load data - ofertas + empresa + config com cache bust
+// Load data - ofertas + empresa + config com cache bust - OFERTAS GLOBAIS via /api/ofertas
 async function loadData() {
   const fetchWithTimeout = (url, ms=4000) => Promise.race([
-    fetch(url + `?t=${Date.now()}`, { cache: 'no-store' }),
+    fetch(url + (url.includes('?') ? '&' : '?') + `t=${Date.now()}`, { cache: 'no-store' }),
     new Promise((_, rej) => setTimeout(()=> rej(new Error('timeout '+url)), ms))
   ]);
   let ofertasJson = null;
   let empresaJson = null;
   let configJson = null;
+  let veioDaApi = false;
   try {
-    // tenta ofertas.json novo, fallback para viagens.json legado
-    let ofertasRes = null;
-    try { ofertasRes = await fetchWithTimeout('data/ofertas.json'); } catch(e) { console.warn('ofertas.json falhou, tentando viagens.json', e); }
-    if (ofertasRes && ofertasRes.ok) {
-      ofertasJson = await ofertasRes.json();
-    } else {
-      const violRes = await fetchWithTimeout('data/viagens.json');
-      if (violRes.ok) ofertasJson = await violRes.json();
+    // 1) Tenta API global primeiro (qualquer dispositivo vê o mesmo catálogo)
+    try {
+      const apiRes = await fetchWithTimeout('/api/ofertas');
+      if (apiRes && apiRes.ok) {
+        const apiData = await apiRes.json();
+        if (Array.isArray(apiData) && apiData.length) {
+          ofertasJson = apiData;
+          veioDaApi = true;
+          console.log(`[ViajeFacil] ofertas via /api/ofertas (Blob global) ${ofertasJson.length}`);
+        } else if (Array.isArray(apiData) && apiData.length === 0) {
+          console.warn('[ViajeFacil] /api/ofertas retornou vazio, fallback para data/*.json');
+        }
+      }
+    } catch (e) { console.warn('api/ofertas falhou, fallback para data/*.json', e.message); }
+    // 2) Fallback para arquivos estáticos se API vazia/falhou
+    if (!ofertasJson) {
+      let ofertasRes = null;
+      try { ofertasRes = await fetchWithTimeout('data/ofertas.json'); } catch(e) { console.warn('ofertas.json falhou, tentando viagens.json', e); }
+      if (ofertasRes && ofertasRes.ok) {
+        ofertasJson = await ofertasRes.json();
+      } else {
+        const violRes = await fetchWithTimeout('data/viagens.json');
+        if (violRes.ok) ofertasJson = await violRes.json();
+      }
     }
     // empresa
     try {
@@ -151,11 +168,17 @@ async function loadData() {
       }
     } catch(_){}
     try {
-      const lsOfertas = localStorage.getItem('vf_ofertas') || localStorage.getItem('vf_viagens');
-      if (lsOfertas) {
-        const parsed = JSON.parse(lsOfertas);
-        if (Array.isArray(parsed) && parsed.length > 0) ofertasJson = parsed.map(normalizarOferta);
-        else if (Array.isArray(parsed) && parsed.length===0) console.warn('vf_ofertas vazio, mantendo seed');
+      // Só usa localStorage se NÃO veio da API global (evita stale per-device sobrescrever Blob)
+      if (!veioDaApi) {
+        const lsOfertas = localStorage.getItem('vf_ofertas') || localStorage.getItem('vf_viagens');
+        if (lsOfertas) {
+          const parsed = JSON.parse(lsOfertas);
+          if (Array.isArray(parsed) && parsed.length > 0) ofertasJson = parsed.map(normalizarOferta);
+          else if (Array.isArray(parsed) && parsed.length===0) console.warn('vf_ofertas vazio, mantendo seed');
+        }
+      } else {
+        // veio da API global: limpa LS stale e sincroniza
+        try { localStorage.setItem('vf_ofertas', JSON.stringify(ofertasJson)); } catch {}
       }
       const lsConfig = localStorage.getItem('vf_config');
       if (lsConfig) {
