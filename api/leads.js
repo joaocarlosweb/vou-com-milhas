@@ -130,43 +130,28 @@ module.exports = async (req, res) => {
     }
     // validação mínima - agora ofertaId opcional para capturar cliques genéricos (header/floating)
     // Se não tem ofertaId, cria lead genérico com origem da URL/referer
-    let novo = null;
-    let lastError = null;
-    // retry para evitar perda de lead quando 2 POSTs simultâneos (read-modify-write race)
-    for (let attempt = 0; attempt < 3; attempt++) {
-      const leads = await getLeadsFromBlobOrFile();
-      novo = {
-        id: Date.now() + attempt, // evita colisão de id em retry
-        ofertaId: body.ofertaId || body.viagemId || null,
-        viagemId: body.viagemId || body.ofertaId || null,
-        rota: body.rota || body.origem || 'WhatsApp Geral',
-        datas: body.datas || body.data || '',
-        preco: body.preco || '',
-        nome: (body.nome || '').toString().slice(0, 80),
-        telefone: (body.telefone || '').toString().slice(0, 20),
-        assentos: body.assentos || '',
-        qtd: body.qtd || 1,
-        origem: body.origem || req.headers['referer'] || req.headers['origin'] || 'site',
-        tipo: body.tipo || (body.ofertaId ? 'oferta' : 'whatsapp-geral'),
-        createdAt: new Date().toISOString(),
-        ip: req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.headers['x-real-ip'] || ''
-      };
-      // evita duplicar se já existe (retry)
-      if (leads.find(l => l.id === novo.id)) novo.id = Date.now() + Math.floor(Math.random()*1000);
-      leads.push(novo);
-      if (leads.length > 5000) leads.splice(0, leads.length - 5000);
-      const result = await saveLeads(leads);
-      if (!result.ok) { lastError = result.error; await new Promise(r=>setTimeout(r, 200+Math.random()*400)); continue; }
-      // verifica se gravou (eventual consistency ~1s)
-      await new Promise(r=>setTimeout(r, 600));
-      const verify = await getLeadsFromBlobOrFile();
-      if (verify.find(l => l.id === novo.id)) {
-        return res.status(201).json({ ok: true, id: novo.id });
-      }
-      lastError = 'verify falhou, retry';
-      await new Promise(r=>setTimeout(r, 300+Math.random()*400));
-    }
-    return res.status(500).json({ error: 'Falha ao salvar lead', detail: lastError });
+    const leads = await getLeadsFromBlobOrFile();
+    const novo = {
+      id: Date.now(),
+      ofertaId: body.ofertaId || body.viagemId || null,
+      viagemId: body.viagemId || body.ofertaId || null,
+      rota: body.rota || body.origem || 'WhatsApp Geral',
+      datas: body.datas || body.data || '',
+      preco: body.preco || '',
+      nome: (body.nome || '').toString().slice(0, 80),
+      telefone: (body.telefone || '').toString().slice(0, 20),
+      assentos: body.assentos || '',
+      qtd: body.qtd || 1,
+      origem: body.origem || req.headers['referer'] || req.headers['origin'] || 'site',
+      tipo: body.tipo || (body.ofertaId ? 'oferta' : 'whatsapp-geral'),
+      createdAt: new Date().toISOString(),
+      ip: req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.headers['x-real-ip'] || ''
+    };
+    leads.push(novo);
+    if (leads.length > 5000) leads.splice(0, leads.length - 5000);
+    const result = await saveLeads(leads);
+    if (!result.ok) return res.status(500).json({ error: 'Falha ao salvar lead', detail: result.error });
+    return res.status(201).json({ ok: true, id: novo.id });
   }
 
   if (req.method === 'DELETE') {
