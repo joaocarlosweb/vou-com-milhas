@@ -1,4 +1,4 @@
-const { put, list } = require('@vercel/blob');
+const { put, list, del } = require('@vercel/blob');
 const jwt = require('jsonwebtoken');
 const cookie = require('cookie');
 const fs = require('fs');
@@ -13,7 +13,8 @@ function verifyAuth(req) {
 }
 
 async function getLeadsFromBlobOrFile() {
-  // tenta Blob primeiro - direct fetch com bust + list fallback
+  // Novo modelo: cada lead é um arquivo em leads/<id>.json (append, sem race)
+  // Mantém compat com legado leads.json único
   const tryFetch = async (url) => {
     try {
       const bustUrl = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
@@ -22,7 +23,7 @@ async function getLeadsFromBlobOrFile() {
         const text = await resp.text();
         try {
           const data = JSON.parse(text);
-          if (Array.isArray(data)) return data;
+          return data;
         } catch {}
       }
     } catch (e) {
@@ -33,17 +34,46 @@ async function getLeadsFromBlobOrFile() {
   try {
     const token = process.env.BLOB_READ_WRITE_TOKEN;
     if (token) {
-      // tenta URL direta conhecida (store_obl32ZeDQvcAfVwK) primeiro para evitar list cache
+      // 1) Tenta novo modelo: lista prefix leads/
+      try {
+        const blobs = await list({ prefix: 'leads/', token });
+        if (blobs.blobs && blobs.blobs.length > 0) {
+          // busca todos os leads individuais (limit 500 para não estourar tempo)
+          const toFetch = blobs.blobs.slice(0, 500);
+          const results = await Promise.all(toFetch.map(async b => {
+            const data = await tryFetch(b.url);
+            // cada arquivo contém um objeto lead
+            if (data && typeof data === 'object' && !Array.isArray(data) && data.id) return data;
+            if (Array.isArray(data)) return data; // compat se alguém gravou array
+            return null;
+          }));
+          let leads = [];
+          results.forEach(r => {
+            if (!r) return;
+            if (Array.isArray(r)) leads = leads.concat(r);
+            else leads.push(r);
+          });
+          if (leads.length > 0) {
+            // ordena por createdAt/id
+            leads.sort((a,b) => (a.createdAt||'').localeCompare(b.createdAt||'') || (a.id||0)-(b.id||0));
+            return leads;
+          }
+        }
+      } catch (e) {
+        console.warn('list leads/ falhou', e.message);
+      }
+      // 2) Fallback legado: leads.json único (para migração)
       const directUrl = 'https://obl32zedqvcafvwk.public.blob.vercel-storage.com/leads.json';
       let data = await tryFetch(directUrl);
-      if (data) return data;
-      // fallback list
-      const blobs = await list({ prefix: 'leads.json', token });
-      const item = blobs.blobs?.find(b => b.pathname === 'leads.json');
-      if (item?.url) {
-        data = await tryFetch(item.url);
-        if (data) return data;
-      }
+      if (data && Array.isArray(data) && data.length) return data;
+      try {
+        const blobs = await list({ prefix: 'leads.json', token });
+        const item = blobs.blobs?.find(b => b.pathname === 'leads.json');
+        if (item?.url) {
+          data = await tryFetch(item.url);
+          if (data && Array.isArray(data)) return data;
+        }
+      } catch {}
     }
   } catch (e) {
     console.warn('Blob read leads falhou, fallback file', e.message);
@@ -60,30 +90,52 @@ async function getLeadsFromBlobOrFile() {
   return [];
 }
 
-async function saveLeads(leads) {
-  const payload = JSON.stringify(leads, null, 2);
+async function saveLeadAppend(lead) {
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  if (!token) {
+    console.error('saveLeadAppend: BLOB_READ_WRITE_TOKEN ausente');
+    return { ok: false, error: 'BLOB_READ_WRITE_TOKEN ausente' };
+  }
   try {
-    const token = process.env.BLOB_READ_WRITE_TOKEN;
-    if (!token) {
-      console.error('saveLeads: BLOB_READ_WRITE_TOKEN ausente');
-      throw new Error('BLOB_READ_WRITE_TOKEN ausente');
-    }
-    await put('leads.json', payload, {
+    const key = `leads/${lead.id}-${Math.random().toString(36).slice(2,6)}.json`;
+    await put(key, JSON.stringify(lead), {
       access: 'public',
       contentType: 'application/json',
       addRandomSuffix: false,
-      allowOverwrite: true,
       cacheControlMaxAge: 0,
       token
     });
-    // também tenta gravar local dev para debug, ignora erro em prod (read-only)
+    return { ok: true };
+  } catch (e) {
+    console.error('Erro ao salvar lead append', e.message, e);
+    return { ok: false, error: e.message };
+  }
+}
+
+async function clearAllLeads() {
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  if (!token) return { ok: false, error: 'BLOB_READ_WRITE_TOKEN ausente' };
+  try {
+    // apaga todos os arquivos em leads/ e o legado leads.json
+    const blobs = await list({ prefix: 'leads', token });
+    const urls = blobs.blobs?.map(b => b.url) || [];
+    if (urls.length) {
+      await del(urls, { token });
+    }
+    // garante que legado também é limpo
     try {
-      const filePath = path.join(process.cwd(), 'data', 'leads.json');
-      fs.writeFileSync(filePath, payload, 'utf-8');
+      await put('leads.json', JSON.stringify([]), {
+        access: 'public',
+        contentType: 'application/json',
+        addRandomSuffix: false,
+        allowOverwrite: true,
+        cacheControlMaxAge: 0,
+        token
+      });
     } catch {}
     return { ok: true };
   } catch (e) {
-    console.error('Erro ao salvar leads no Blob', e.message, e);
+    console.error('Erro ao limpar leads', e.message);
     return { ok: false, error: e.message };
   }
 }
@@ -103,22 +155,18 @@ module.exports = async (req, res) => {
   }
 
   if (req.method === 'POST') {
-    // POST público (cliente deslogado) - suporta JSON, Buffer (sendBeacon) e string
     let body = req.body;
     if (!body || typeof body === 'string' || Buffer.isBuffer(body)) {
-      // Se for Buffer (sendBeacon), converte para string
       if (Buffer.isBuffer(body)) {
         try { body = JSON.parse(body.toString('utf-8') || '{}'); } catch { body = {}; }
       } else {
         body = await new Promise(resolve => {
           let data = '';
-          // Se body já é string parcial, usa como inicial
           if (typeof body === 'string' && body) data = body;
           req.on('data', chunk => data += chunk);
           req.on('end', () => {
             try { resolve(JSON.parse(data || '{}')); } catch { resolve({}); }
           });
-          // Se req já terminou (body vazio), resolve imediatamente
           if (req.readableEnded) {
             try { resolve(JSON.parse(data || '{}')); } catch { resolve({}); }
           }
@@ -128,9 +176,6 @@ module.exports = async (req, res) => {
     if (!body || typeof body !== 'object' || Array.isArray(body)) {
       return res.status(400).json({ error: 'Body inválido' });
     }
-    // validação mínima - agora ofertaId opcional para capturar cliques genéricos (header/floating)
-    // Se não tem ofertaId, cria lead genérico com origem da URL/referer
-    const leads = await getLeadsFromBlobOrFile();
     const novo = {
       id: Date.now(),
       ofertaId: body.ofertaId || body.viagemId || null,
@@ -147,16 +192,14 @@ module.exports = async (req, res) => {
       createdAt: new Date().toISOString(),
       ip: req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.headers['x-real-ip'] || ''
     };
-    leads.push(novo);
-    if (leads.length > 5000) leads.splice(0, leads.length - 5000);
-    const result = await saveLeads(leads);
+    const result = await saveLeadAppend(novo);
     if (!result.ok) return res.status(500).json({ error: 'Falha ao salvar lead', detail: result.error });
     return res.status(201).json({ ok: true, id: novo.id });
   }
 
   if (req.method === 'DELETE') {
     if (!verifyAuth(req)) return res.status(401).json({ error: 'Não autorizado' });
-    const result = await saveLeads([]);
+    const result = await clearAllLeads();
     if (!result.ok) return res.status(500).json({ error: 'Falha ao limpar', detail: result.error });
     return res.status(200).json({ ok: true });
   }

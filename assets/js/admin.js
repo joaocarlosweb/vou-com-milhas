@@ -42,9 +42,19 @@ async function loadInitialData(){
   try{
     // tenta API primeiro (produção com JWT), fallback para data/*.json + localStorage (dev)
     let ofertasFromApi = null;
+    let configFromApi = null;
+    let empresaFromApi = null;
     try {
-      const r = await fetch('/api/ofertas', { credentials: 'include' });
+      const r = await fetch('/api/ofertas?t='+Date.now(), { credentials: 'include', cache: 'no-store' });
       if(r.ok) ofertasFromApi = await r.json();
+    } catch {}
+    try {
+      const r = await fetch('/api/config?t='+Date.now(), { cache: 'no-store' });
+      if(r.ok) configFromApi = await r.json();
+    } catch {}
+    try {
+      const r = await fetch('/api/empresa?t='+Date.now(), { cache: 'no-store' });
+      if(r.ok) empresaFromApi = await r.json();
     } catch {}
     const [ofertasRes, viagensRes, cfgRes, empRes] = await Promise.allSettled([
       fetch('data/ofertas.json'), fetch('data/viagens.json'), fetch('data/config.json'), fetch('data/empresa.json')
@@ -53,24 +63,46 @@ async function loadInitialData(){
     if(ofertasFromApi && Array.isArray(ofertasFromApi) && ofertasFromApi.length) seedOfertas = ofertasFromApi;
     else if(ofertasRes.status==='fulfilled' && ofertasRes.value.ok) seedOfertas = await ofertasRes.value.json();
     else if(viagensRes.status==='fulfilled' && viagensRes.value.ok) seedOfertas = (await viagensRes.value.json()).map(normalizar);
-    let seedConfig = cfgRes.status==='fulfilled' && cfgRes.value.ok ? await cfgRes.value.json() : { whatsapp:'5584998979071', nomeEmpresa:'Vou com Milhas' };
-    let seedEmpresa = empRes.status==='fulfilled' && empRes.value.ok ? await empRes.value.json() : {};
+    let seedConfig = configFromApi && typeof configFromApi === 'object' && configFromApi.whatsapp ? configFromApi : (cfgRes.status==='fulfilled' && cfgRes.value.ok ? await cfgRes.value.json() : { whatsapp:'5584998979071', nomeEmpresa:'Vou com Milhas' });
+    let seedEmpresa = empresaFromApi && typeof empresaFromApi === 'object' && Object.keys(empresaFromApi).length ? empresaFromApi : (empRes.status==='fulfilled' && empRes.value.ok ? await empRes.value.json() : {});
 
-    const lsOfertas = localStorage.getItem(LS_OFERTAS) || localStorage.getItem(LS_VIAGENS);
-    if(lsOfertas){
-      try{
-        const parsed = JSON.parse(lsOfertas);
-        if(Array.isArray(parsed) && parsed.length>0) ofertas = parsed.map(normalizar);
-        else { ofertas = seedOfertas.map(normalizar); await persistOfertas(); }
-      } catch{ ofertas = seedOfertas.map(normalizar); }
+    // Ofertas: prioriza Blob global, não deixa LS stale sobrescrever
+    if (ofertasFromApi && Array.isArray(ofertasFromApi)) {
+      ofertas = ofertasFromApi.map(normalizar);
+      try{ localStorage.setItem(LS_OFERTAS, JSON.stringify(ofertas)); localStorage.setItem(LS_VIAGENS, JSON.stringify(ofertas)); }catch{}
+      // se Blob estava vazio e temos seed de arquivo, semeia
+      if (ofertas.length === 0 && seedOfertas.length) {
+        ofertas = seedOfertas.map(normalizar);
+        await persistOfertas();
+      }
     } else {
-      ofertas = seedOfertas.map(normalizar);
-      await persistOfertas();
+      const lsOfertas = localStorage.getItem(LS_OFERTAS) || localStorage.getItem(LS_VIAGENS);
+      if(lsOfertas){
+        try{
+          const parsed = JSON.parse(lsOfertas);
+          if(Array.isArray(parsed) && parsed.length>0) ofertas = parsed.map(normalizar);
+          else { ofertas = seedOfertas.map(normalizar); await persistOfertas(); }
+        } catch{ ofertas = seedOfertas.map(normalizar); }
+      } else {
+        ofertas = seedOfertas.map(normalizar);
+        await persistOfertas();
+      }
     }
-    const lsCfg = localStorage.getItem(LS_CONFIG);
-    if(lsCfg){ try{ config = {...seedConfig, ...JSON.parse(lsCfg)}; } catch{ config=seedConfig; } } else { config=seedConfig; persistConfig(); }
-    const lsEmp = localStorage.getItem(LS_EMPRESA);
-    if(lsEmp){ try{ empresa = {...seedEmpresa, ...JSON.parse(lsEmp)}; } catch{ empresa=seedEmpresa; } } else { empresa=seedEmpresa; persistEmpresa(); }
+    // Config/Empresa globais: prioriza Blob, não deixa LS stale sobrescrever
+    if (configFromApi) {
+      config = configFromApi;
+      try{ localStorage.setItem(LS_CONFIG, JSON.stringify(config)); }catch{}
+    } else {
+      const lsCfg = localStorage.getItem(LS_CONFIG);
+      if(lsCfg){ try{ config = {...seedConfig, ...JSON.parse(lsCfg)}; } catch{ config=seedConfig; } } else { config=seedConfig; persistConfig(); }
+    }
+    if (empresaFromApi && Object.keys(empresaFromApi).length) {
+      empresa = empresaFromApi;
+      try{ localStorage.setItem(LS_EMPRESA, JSON.stringify(empresa)); }catch{}
+    } else {
+      const lsEmp = localStorage.getItem(LS_EMPRESA);
+      if(lsEmp){ try{ empresa = {...seedEmpresa, ...JSON.parse(lsEmp)}; } catch{ empresa=seedEmpresa; } } else { empresa=seedEmpresa; persistEmpresa(); }
+    }
 
   } catch(e){
     console.error('loadInitialData falhou',e);
@@ -96,29 +128,58 @@ async function persistOfertas(){
   localStorage.setItem(LS_OFERTAS, JSON.stringify(ofertas));
   localStorage.setItem(LS_VIAGENS, JSON.stringify(ofertas));
 }
-function persistConfig(){ localStorage.setItem(LS_CONFIG, JSON.stringify(config)); }
-function persistEmpresa(){ localStorage.setItem(LS_EMPRESA, JSON.stringify(empresa)); }
+async function persistConfig(){
+  localStorage.setItem(LS_CONFIG, JSON.stringify(config));
+  try {
+    await fetch('/api/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(config)
+    });
+  } catch {}
+}
+async function persistEmpresa(){
+  localStorage.setItem(LS_EMPRESA, JSON.stringify(empresa));
+  try {
+    await fetch('/api/empresa', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(empresa)
+    });
+  } catch {}
+}
 
-// Leads globais via Blob (fallback localStorage)
+// Leads globais via Blob (fallback localStorage) - não zera cache se API retornar vazio por stale
 let leadsCache = null;
-async function fetchLeadsGlobal(){
+let leadsCacheTs = 0;
+async function fetchLeadsGlobal(force = false){
   try{
     const r = await fetch('/api/leads?t='+Date.now(), { credentials: 'include', cache: 'no-store' });
     if(r.ok){
       const data = await r.json();
       if(Array.isArray(data)){
-        leadsCache = data;
-        // mantém LS sincronizado para offline
-        try{ localStorage.setItem(LS_LEADS, JSON.stringify(data)); }catch{}
-        return data;
+        // se API retornou vazio mas tínhamos dados, pode ser stale (consistência eventual) - preserva cache
+        // só aceita vazio se force=true (após DELETE) ou se cache também vazio/nulo
+        const isStaleEmpty = data.length === 0 && leadsCache && leadsCache.length > 0 && !force && (Date.now() - leadsCacheTs < 120000);
+        if (!isStaleEmpty) {
+          leadsCache = data;
+          leadsCacheTs = Date.now();
+          try{ localStorage.setItem(LS_LEADS, JSON.stringify(data)); }catch{}
+        }
+        return leadsCache;
       }
     }
   }catch(e){ /* fallback */ }
   try{
     const ls = JSON.parse(localStorage.getItem(LS_LEADS)||'[]');
-    leadsCache = Array.isArray(ls)? ls : [];
+    if (leadsCache === null) {
+      leadsCache = Array.isArray(ls)? ls : [];
+      leadsCacheTs = Date.now();
+    }
     return leadsCache;
-  }catch{ return []; }
+  }catch{ return leadsCache || []; }
 }
 function getLeadsSync(){
   if(leadsCache && Array.isArray(leadsCache)) return leadsCache;

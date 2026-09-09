@@ -146,16 +146,44 @@ async function loadData() {
         if (violRes.ok) ofertasJson = await violRes.json();
       }
     }
-    // empresa
+    // empresa - tenta Blob global primeiro
+    let empresaFromApi = null;
     try {
-      const empRes = await fetchWithTimeout('data/empresa.json');
-      if (empRes.ok) empresaJson = await empRes.json();
-    } catch(e) { console.warn('empresa.json falhou', e); }
-    // config
+      const empApiRes = await fetchWithTimeout('/api/empresa');
+      if (empApiRes && empApiRes.ok) {
+        const apiEmp = await empApiRes.json();
+        if (apiEmp && typeof apiEmp === 'object' && Object.keys(apiEmp).length) {
+          empresaJson = apiEmp;
+          empresaFromApi = true;
+          console.log('[ViajeFacil] empresa via /api/empresa (Blob global)');
+        }
+      }
+    } catch {}
+    if (!empresaFromApi) {
+      try {
+        const empRes = await fetchWithTimeout('data/empresa.json');
+        if (empRes.ok) empresaJson = await empRes.json();
+      } catch(e) { console.warn('empresa.json falhou', e); }
+    }
+    // config - tenta Blob global primeiro
+    let configFromApi = null;
     try {
-      const cfgRes = await fetchWithTimeout('data/config.json');
-      if (cfgRes.ok) configJson = await cfgRes.json();
-    } catch(e) {}
+      const cfgApiRes = await fetchWithTimeout('/api/config');
+      if (cfgApiRes && cfgApiRes.ok) {
+        const apiCfg = await cfgApiRes.json();
+        if (apiCfg && typeof apiCfg === 'object' && apiCfg.whatsapp) {
+          configJson = apiCfg;
+          configFromApi = true;
+          console.log('[ViajeFacil] config via /api/config (Blob global)');
+        }
+      }
+    } catch {}
+    if (!configFromApi) {
+      try {
+        const cfgRes = await fetchWithTimeout('data/config.json');
+        if (cfgRes.ok) configJson = await cfgRes.json();
+      } catch(e) {}
+    }
     if (!ofertasJson) throw new Error('nenhum ofertas/viagens json');
     // normaliza
     ofertasJson = ofertasJson.map(normalizarOferta);
@@ -180,15 +208,24 @@ async function loadData() {
         // veio da API global: limpa LS stale e sincroniza
         try { localStorage.setItem('vf_ofertas', JSON.stringify(ofertasJson)); } catch {}
       }
-      const lsConfig = localStorage.getItem('vf_config');
-      if (lsConfig) {
-        const pc = JSON.parse(lsConfig);
-        if (pc && pc.whatsapp) configJson = { ...(configJson||{}), ...pc };
+      // Só usa LS se não veio da API global (evita stale per-device)
+      if (!configFromApi) {
+        const lsConfig = localStorage.getItem('vf_config');
+        if (lsConfig) {
+          const pc = JSON.parse(lsConfig);
+          if (pc && pc.whatsapp) configJson = { ...(configJson||{}), ...pc };
+        }
+      } else {
+        try { localStorage.setItem('vf_config', JSON.stringify(configJson)); } catch {}
       }
-      const lsEmpresa = localStorage.getItem('vf_empresa');
-      if (lsEmpresa) {
-        const pe = JSON.parse(lsEmpresa);
-        if (pe) empresaJson = { ...(empresaJson||{}), ...pe };
+      if (!empresaFromApi) {
+        const lsEmpresa = localStorage.getItem('vf_empresa');
+        if (lsEmpresa) {
+          const pe = JSON.parse(lsEmpresa);
+          if (pe) empresaJson = { ...(empresaJson||{}), ...pe };
+        }
+      } else {
+        try { localStorage.setItem('vf_empresa', JSON.stringify(empresaJson)); } catch {}
       }
     } catch(e) { console.warn('localStorage override falhou', e); }
 
