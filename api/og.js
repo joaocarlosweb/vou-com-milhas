@@ -85,6 +85,35 @@ module.exports = async (req, res) => {
     title = `✈️ ${oferta.origem} (${oferta.aeroportoOrigem || ''}) → ${oferta.destino} (${oferta.aeroportoDestino || ''}) a partir de ${precoFmt} — Vou com Milhas`;
     description = `${oferta.descricao || ''} • ${oferta.datas || ''} • ${oferta.duracao || ''} • ${oferta.empresa || ''} • ${milhasPart}${precoFmt} taxas. ${oferta.vagasTexto || ''} Valida até ${oferta.validadeAte || 'enquanto durar'}.`.replace(/\s+/g, ' ').trim();
     image = oferta.imagem; // exatamente o.imagem
+    // Se imagem for data: (galeria dispositivo sem upload), converte para Blob https
+    if (image && image.startsWith('data:')) {
+      try {
+        const token = process.env.BLOB_READ_WRITE_TOKEN;
+        if (token) {
+          const { put } = require('@vercel/blob');
+          const base64 = image.split(',')[1];
+          const buffer = Buffer.from(base64, 'base64');
+          // detecta contentType simples
+          let contentType = 'image/jpeg';
+          if (image.startsWith('data:image/png')) contentType = 'image/png';
+          else if (image.startsWith('data:image/webp')) contentType = 'image/webp';
+          const key = `ofertas/og-${id}.jpg`;
+          const up = await put(key, buffer, {
+            access: 'public',
+            contentType,
+            addRandomSuffix: false,
+            allowOverwrite: true,
+            cacheControlMaxAge: 31536000,
+            token
+          });
+          if (up && up.url) image = up.url;
+        }
+      } catch (e) {
+        console.warn('Falha converter data: para Blob OG', e.message);
+        // fallback para logo se não conseguiu converter
+        image = `${baseUrl}/assets/img/logo-voucommilhas.jpg`;
+      }
+    }
   } else {
     title = 'Oferta — Vou com Milhas';
     description = 'Confira esta oferta exclusiva da Vou com Milhas no WhatsApp 84 99987-9071.';
