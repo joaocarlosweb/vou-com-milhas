@@ -435,8 +435,7 @@ function renderViagens(lista){
       <div class="relative h-44 overflow-hidden">
         <img src="${o.imagem}" alt="${o.origem} para ${o.destino}" class="w-full h-full object-cover group-hover:scale-[1.05] transition duration-700">
         <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent"></div>
-        <div class="absolute top-3 left-3 flex flex-wrap gap-1.5 max-w-[calc(100%-88px)] items-start">
-          <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-white/90 backdrop-blur text-slate-800 whitespace-nowrap shrink-0 inline-flex items-center"><i data-lucide="plane" class="w-3 h-3 inline mr-1"></i>${o.empresa||''} • ${o.tipo||'Econômica'}</span>
+        <div class="absolute top-3 left-3 flex flex-wrap gap-2 max-w-[calc(100%-72px)] items-start">
           ${destaqueBadge}
           ${milhasBadge}
         </div>
