@@ -3,7 +3,8 @@
     "api/*.js": { "maxDuration": 10 }
   },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" }
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/oferta.html", "destination": "/api/og" }
   ],
   "headers": [
     {
