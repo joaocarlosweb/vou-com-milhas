@@ -87,47 +87,46 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  if (heroSection && !isMobile) {
-    // Pin hero por 750px - vídeo/imagem fica, conteúdo sobe
+  if (heroSection) {
+    // Pin hero - vídeo fixo enquanto conteúdo sobe (mobile e desktop) - Letra A com end adaptativo
+    const pinEnd = isMobile ? '+=600' : '+=750';
     ScrollTrigger.create({
       trigger: '.hero-section',
       start: 'top top',
-      end: '+=750',
+      end: pinEnd,
       pin: true,
       pinSpacing: false,
       anticipatePin: 1
     });
-    // Camadas parallax: bg lento, conteúdo rápido, card mais rápido
+    // Camadas parallax: bg lento, conteúdo rápido
     if (heroBgFixed) {
       gsap.to(heroBgFixed, {
-        yPercent: 14,
+        yPercent: isMobile ? 12 : 14,
         ease: 'none',
-        scrollTrigger: { trigger: '.hero-section', start: 'top top', end: '+=750', scrub: 1 }
+        scrollTrigger: { trigger: '.hero-section', start: 'top top', end: pinEnd, scrub: 1 }
+      });
+    } else if (heroBgForParallax) {
+      gsap.to(heroBgForParallax, {
+        yPercent: isMobile ? -12 : 14,
+        ease: 'none',
+        scrollTrigger: { trigger: '.hero-section', start: 'top top', end: pinEnd, scrub: 1 }
       });
     }
     if (heroContent) {
       gsap.to(heroContent, {
-        yPercent: -18,
-        opacity: 0.88,
+        yPercent: isMobile ? -6 : -18,
+        opacity: isMobile ? 0.95 : 0.88,
         ease: 'none',
-        scrollTrigger: { trigger: '.hero-section', start: 'top top', end: '+=750', scrub: 1 }
+        scrollTrigger: { trigger: '.hero-section', start: 'top top', end: pinEnd, scrub: 1 }
       });
     }
 
     gsap.to('#hero-trail', {
       yPercent: -10,
       ease: 'none',
-      scrollTrigger: { trigger: '.hero-section', start: 'top top', end: '+=750', scrub: 1 }
+      scrollTrigger: { trigger: '.hero-section', start: 'top top', end: pinEnd, scrub: 1 }
     });
     // Lenis sync já feito no topo (evita duplicar Forced reflow)
-  } else {
-    // Fallback mobile: parallax simples sem pin - perceptível no Android com touch real
-    if (heroBgForParallax) {
-      gsap.to(heroBgForParallax, { yPercent: -12, ease: 'none', scrollTrigger: { trigger: '.hero-section', start: 'top top', end: '+=600', scrub: 1 } });
-    }
-    if (heroContent) {
-      gsap.to(heroContent, { yPercent: -6, opacity: 0.95, ease: 'none', scrollTrigger: { trigger: '.hero-section', start: 'top top', end: '+=600', scrub: 1 } });
-    }
   }
   // Trail SVG dash anim (sempre)
   const trail = document.getElementById('hero-trail');
