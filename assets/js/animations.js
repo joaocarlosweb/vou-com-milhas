@@ -3,9 +3,16 @@ document.addEventListener('DOMContentLoaded', () => {
   if (typeof gsap === 'undefined') return;
   gsap.registerPlugin(ScrollTrigger);
 
-  // Lenis Smooth Scroll
+  // Lenis Smooth Scroll - com suporte touch Android (Letra B)
   if (typeof Lenis !== 'undefined') {
-    const lenis = new Lenis({ duration: 1.1, easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)) });
+    const lenis = new Lenis({
+      duration: 1.1,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      smoothTouch: true,
+      touchMultiplier: 1.8,
+      gestureOrientation: 'vertical',
+      lerp: 0.08
+    });
     window.lenis = lenis;
     lenis.on('scroll', ScrollTrigger.update);
     function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
@@ -28,7 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const heroFallbackImg = document.getElementById('hero-fallback-img');
   const heroBgImg = document.querySelector('.hero-bg-fixed img') || document.querySelector('.hero-section img.object-cover');
   const heroContent = document.querySelector('.hero-content');
-  const isMobile = window.matchMedia('(max-width: 768px)').matches;
+  const isMobile = window.matchMedia('(max-width: 768px)').matches || 'ontouchstart' in window;
+  const heroBgForParallax = heroBgFixed || heroVideo || heroBgImg;
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // Video autoplay handling + fallback (usa variáveis já declaradas heroVideo/heroFallbackImg)
@@ -113,9 +121,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     // Lenis sync já feito no topo (evita duplicar Forced reflow)
   } else {
-    // Fallback mobile: parallax simples sem pin
-    const bg = heroVideo || heroBgImg;
-    if (bg) gsap.to(bg, { yPercent: -6, ease: 'none', scrollTrigger: { trigger: '.hero-section', start: 'top top', end: 'bottom top', scrub: 1 } });
+    // Fallback mobile: parallax simples sem pin - perceptível no Android com touch real
+    if (heroBgForParallax) {
+      gsap.to(heroBgForParallax, { yPercent: -12, ease: 'none', scrollTrigger: { trigger: '.hero-section', start: 'top top', end: '+=600', scrub: 1 } });
+    }
+    if (heroContent) {
+      gsap.to(heroContent, { yPercent: -6, opacity: 0.95, ease: 'none', scrollTrigger: { trigger: '.hero-section', start: 'top top', end: '+=600', scrub: 1 } });
+    }
   }
   // Trail SVG dash anim (sempre)
   const trail = document.getElementById('hero-trail');
