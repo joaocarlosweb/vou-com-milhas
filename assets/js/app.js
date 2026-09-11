@@ -415,8 +415,8 @@ function renderViagens(lista){
   container.innerHTML=lista.map(o=>{
     const precoAntigo = o.precoAntigo ? `<span class="text-xs text-slate-400 line-through ml-2">De ${formatPreco(o.precoAntigo)}</span>` : '';
     const milhasTxt = o.milhas ? `${o.milhas.toLocaleString('pt-BR')} milhas + taxas` : '';
-    const milhasBadge = o.milhas ? `<span class="px-2 py-1 rounded-full text-[11px] font-bold bg-[#1E3145] text-white border border-white/20">${o.milhas.toLocaleString('pt-BR')} milhas</span>` : '';
-    const destaqueBadge = o.destaque ? `<span class="px-2 py-1 rounded-full text-[11px] font-bold bg-amber-500 text-white">🔥 Destaque</span>` : '';
+    const milhasBadge = o.milhas ? `<span class="px-2 py-1 rounded-full text-[11px] font-bold bg-[#1E3145] text-white border border-white/20 whitespace-nowrap shrink-0 inline-flex items-center">${o.milhas.toLocaleString('pt-BR')} milhas</span>` : '';
+    const destaqueBadge = o.destaque ? `<span class="px-2 py-1 rounded-full text-[11px] font-bold bg-amber-500 text-white whitespace-nowrap shrink-0 inline-flex items-center">🔥 Destaque</span>` : '';
     const escalaTxt = o.escalas === 0 ? 'Direto' : `${o.escalas} escala${o.escalas>1?'s':''}`;
     const parcelaCalc = o.parcelas ? calculaParcela(o, o.parcelas) : null;
     const parcelaInfo = parcelaCalc ? { ...parcelaCalc, texto: `${o.parcelas}x de ${formatPreco(parcelaCalc.valor)}${parcelaCalc.semJuros?' sem juros':` c/ ${o.acrescimoPorParcela}% a.m.`}` } : null;
@@ -425,18 +425,18 @@ function renderViagens(lista){
       const hoje=new Date(); hoje.setHours(0,0,0,0);
       const val=new Date(o.validadeAte); val.setHours(0,0,0,0);
       const diff=Math.ceil((val-hoje)/86400000);
-      if(diff<0) return '<span class="px-2 py-1 rounded-full text-xs bg-red-50 text-red-700 border border-red-200">⏳ Encerrada</span>';
-      if(diff===0) return '<span class="px-2 py-1 rounded-full text-xs bg-red-50 text-red-700 border border-red-200">⏳ Encerra hoje</span>';
-      if(diff<=2) return `<span class="px-2 py-1 rounded-full text-xs bg-amber-50 text-amber-700 border border-amber-200">⏳ Encerra em ${diff}d</span>`;
-      return `<span class="px-2 py-1 rounded-full text-xs bg-emerald-50 text-emerald-700 border border-emerald-200">⏳ Até ${formatData(o.validadeAte)}</span>`;
+      if(diff<0) return '<span class="px-2 py-1 rounded-full text-xs bg-red-50 text-red-700 border border-red-200 whitespace-nowrap shrink-0 inline-flex items-center">⏳ Encerrada</span>';
+      if(diff===0) return '<span class="px-2 py-1 rounded-full text-xs bg-red-50 text-red-700 border border-red-200 whitespace-nowrap shrink-0 inline-flex items-center">⏳ Encerra hoje</span>';
+      if(diff<=2) return `<span class="px-2 py-1 rounded-full text-xs bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap shrink-0 inline-flex items-center">⏳ Encerra em ${diff}d</span>`;
+      return `<span class="px-2 py-1 rounded-full text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shrink-0 inline-flex items-center">⏳ Até ${formatData(o.validadeAte)}</span>`;
     })();
     return `
     <article class="card-viagem group bg-white rounded-[20px] overflow-hidden border border-slate-200 hover:border-slate-300 flex flex-col">
       <div class="relative h-44 overflow-hidden">
         <img src="${o.imagem}" alt="${o.origem} para ${o.destino}" class="w-full h-full object-cover group-hover:scale-[1.05] transition duration-700">
         <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent"></div>
-        <div class="absolute top-3 left-3 flex flex-wrap gap-1.5 max-w-[80%]">
-          <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-white/90 backdrop-blur text-slate-800"><i data-lucide="plane" class="w-3 h-3 inline mr-1"></i>${o.empresa||''} • ${o.tipo||'Econômica'}</span>
+        <div class="absolute top-3 left-3 flex flex-wrap gap-1.5 max-w-[calc(100%-88px)] items-start">
+          <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-white/90 backdrop-blur text-slate-800 whitespace-nowrap shrink-0 inline-flex items-center"><i data-lucide="plane" class="w-3 h-3 inline mr-1"></i>${o.empresa||''} • ${o.tipo||'Econômica'}</span>
           ${destaqueBadge}
           ${milhasBadge}
         </div>
