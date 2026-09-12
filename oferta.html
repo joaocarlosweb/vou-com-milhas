@@ -131,8 +131,8 @@
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
   <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
-  <script src="assets/js/app.js?v=20250908-10"></script>
-  <script src="assets/js/animations.js?v=20250908-10"></script>
+  <script src="assets/js/app.js?v=20250908-11"></script>
+  <script src="assets/js/animations.js?v=20250908-11"></script>
   <script>
     lucide.createIcons();
     // Compartilhar oferta - robusto mesmo antes de carregar dados
@@ -165,7 +165,7 @@
           return;
         }
         const baseUrl=location.origin + location.pathname.replace('oferta.html','');
-        const link=`${baseUrl}oferta.html?id=${v.id}`;
+        const link=`${baseUrl}api/og?id=${v.id}`;
         const precoTxt = v.preco ? new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v.preco) : '';
         const text = v.origem ? `✈️ OFERTA VOU COM MILHAS - ${v.origem}→${v.destino} ${v.datas||''} por ${precoTxt}` : `✈️ OFERTA VOU COM MILHAS - Detalhes:`;
         const shareData={ title: `Vou com Milhas - ${v.origem||'Oferta'}→${v.destino||''}`, text, url: link };
