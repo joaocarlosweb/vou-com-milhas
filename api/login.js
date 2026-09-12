@@ -1,9 +1,12 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cookie = require('cookie');
+const { rate } = require('./_rate');
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  // 5 tentativas / 60s por IP (Hobby in-memory)
+  if (!rate({ keyPrefix: 'login', limit: 5, windowMs: 60_000, res })(req)) return;
 
   let body = '';
   if (req.body && typeof req.body === 'object' && !Buffer.isBuffer(req.body)) {
@@ -35,14 +38,14 @@ module.exports = async (req, res) => {
   const ok = await bcrypt.compare(pass, ADMIN_HASH);
   if (!ok) return res.status(401).json({ error: 'Usuário ou senha inválidos' });
 
-  const token = jwt.sign({ user }, JWT_SECRET, { expiresIn: '8h' });
+  const token = jwt.sign({ user, jti: require('crypto').randomUUID() }, JWT_SECRET, { expiresIn: '2h', issuer: 'vou-com-milhas', audience: 'admin' });
 
-  res.setHeader('Set-Cookie', cookie.serialize('token', token, {
+  res.setHeader('Set-Cookie', cookie.serialize('__Host-token', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: true,
     sameSite: 'strict',
     path: '/',
-    maxAge: 8 * 60 * 60
+    maxAge: 2 * 60 * 60
   }));
 
   return res.status(200).json({ ok: true });

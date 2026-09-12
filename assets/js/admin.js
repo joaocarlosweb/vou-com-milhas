@@ -7,6 +7,7 @@ const LS_LEADS = 'vf_leads';
 
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 const formatPreco = v => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const formatDataBR = d => { if(!d) return ''; if(d.includes('/')) return d; const [y,m,day]=d.split('-'); return `${day}/${m}/${y}`; };
 
@@ -424,17 +425,22 @@ async function renderLeads(){
   $('#leads-count').textContent=`${leads.length} leads`;
   if(leads.length===0){ container.innerHTML=`<div class="py-10 text-center text-slate-500 text-sm">Nenhum lead ainda. Quando cliente clicar em Consultar no WhatsApp, aparece aqui.</div>`; return; }
   container.innerHTML=leads.map(l=>{
-    const d=new Date(l.createdAt); const dataStr=!isNaN(d)? d.toLocaleString('pt-BR') : (l.createdAt||'');
-    const tel = l.telefone? ` • 📞 ${l.telefone}` : '';
-    const assentos = l.assentos? ` • 💺 ${l.assentos}` : '';
+    const d=new Date(l.createdAt); const dataStr=!isNaN(d)? d.toLocaleString('pt-BR') : esc(l.createdAt||'');
+    const tel = l.telefone? ` • 📞 ${esc(l.telefone)}` : '';
+    const assentos = l.assentos? ` • 💺 ${esc(l.assentos)}` : '';
+    // msg para wa.me é encodeURIComponent, mas exibição usa esc
+    const nomeEsc = esc(l.nome||'');
+    const rotaEsc = esc(l.rota||'Oferta #'+(l.ofertaId||l.viagemId));
+    const datasEsc = esc(l.datas||l.data||'');
+    const precoEsc = esc(l.preco||'');
     const msg=`Olá ${l.nome||''}! Vi seu interesse em ${l.rota||l.ofertaId} Datas ${l.datas||''}. Posso confirmar?`;
     return `<div class="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div class="flex-1 min-w-0">
-        <div class="font-semibold text-sm truncate">${l.rota||'Oferta #'+(l.ofertaId||l.viagemId)} • ${l.datas||l.data||''} • ${l.preco||''}${assentos}</div>
-        <div class="text-xs text-slate-500 truncate">${l.nome?`👤 ${l.nome}`:'👤 Sem nome'}${tel} • ${dataStr}</div>
+        <div class="font-semibold text-sm truncate">${rotaEsc} • ${datasEsc} • ${precoEsc}${assentos}</div>
+        <div class="text-xs text-slate-500 truncate">${l.nome?`👤 ${nomeEsc}`:'👤 Sem nome'}${tel} • ${esc(dataStr)}</div>
       </div>
       <div class="flex gap-2 shrink-0">
-        <a href="https://wa.me/${config.whatsapp}?text=${encodeURIComponent(msg)}" target="_blank" class="px-3 py-2 rounded-full bg-[#25D366] text-white text-xs font-semibold inline-flex items-center gap-1"><i data-lucide="message-circle" class="w-3.5 h-3.5"></i> Responder</a>
+        <a href="https://wa.me/${esc(config.whatsapp)}?text=${encodeURIComponent(msg)}" target="_blank" class="px-3 py-2 rounded-full bg-[#25D366] text-white text-xs font-semibold inline-flex items-center gap-1"><i data-lucide="message-circle" class="w-3.5 h-3.5"></i> Responder</a>
         <button onclick="copiarLead('${encodeURIComponent(msg)}')" class="px-3 py-2 rounded-full bg-slate-900 text-white text-xs font-semibold">Copiar</button>
       </div>
     </div>`;

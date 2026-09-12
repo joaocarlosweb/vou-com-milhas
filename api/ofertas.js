@@ -98,6 +98,37 @@ module.exports = async (req, res) => {
       });
     }
     if (!Array.isArray(body)) return res.status(400).json({ error: 'Esperado array de ofertas' });
+    // Sanitização Hobby: whitelist + limites + strip tags
+    const allowedEmpresas = ['LATAM','Gol','Azul'];
+    const allowedTipos = ['Econômica','Econômica Premium','Executiva','Primeira'];
+    const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const strip = s => String(s||'').replace(/<[^>]*>/g,'').trim();
+    body = body.slice(0, 100).map(o => ({
+      id: Number(o.id) || Date.now(),
+      origem: esc(strip(o.origem||'')).slice(0,40),
+      destino: esc(strip(o.destino||'')).slice(0,40),
+      aeroportoOrigem: String(o.aeroportoOrigem||'').replace(/[^A-Z]/g,'').slice(0,3).toUpperCase(),
+      aeroportoDestino: String(o.aeroportoDestino||'').replace(/[^A-Z]/g,'').slice(0,3).toUpperCase(),
+      datas: esc(strip(o.datas||'')).slice(0,40),
+      dataInicio: String(o.dataInicio||'').slice(0,10),
+      validadeAte: String(o.validadeAte||'').slice(0,10),
+      preco: Math.min(99999, Math.max(0, Number(o.preco)||0)),
+      precoAntigo: o.precoAntigo ? Math.min(99999, Math.max(0, Number(o.precoAntigo)||0)) : null,
+      milhas: o.milhas ? Math.min(999999, Math.max(0, parseInt(o.milhas)||0)) : null,
+      parcelas: o.parcelas ? Math.min(18, Math.max(1, parseInt(o.parcelas)||0)) : null,
+      parcelasSemJuros: Math.min(18, Math.max(1, parseInt(o.parcelasSemJuros)||6)),
+      acrescimoPorParcela: Math.min(10, Math.max(0, Number(o.acrescimoPorParcela)||0)),
+      empresa: allowedEmpresas.includes(o.empresa) ? o.empresa : 'LATAM',
+      tipo: allowedTipos.includes(o.tipo) ? o.tipo : 'Econômica',
+      duracao: esc(strip(o.duracao||'')).slice(0,10),
+      escalas: Math.min(2, Math.max(0, parseInt(o.escalas)||0)),
+      bagagem: esc(String(o.bagagem||'10kg').slice(0,20)),
+      imagem: String(o.imagem||'').slice(0,2000),
+      status: ['ativa','encerrada','pausada'].includes(o.status) ? o.status : 'ativa',
+      destaque: !!o.destaque,
+      vagasTexto: esc(strip(o.vagasTexto||'')).slice(0,40),
+      descricao: esc(strip(o.descricao||'')).slice(0,300)
+    }));
 
     // tenta salvar: 1) KV (Neon) 2) Blob 3) /tmp
     let saved = false;

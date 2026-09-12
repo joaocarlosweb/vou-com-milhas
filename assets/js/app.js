@@ -26,6 +26,7 @@ const VIAGENS_FALLBACK = OFERTAS_FALLBACK; // compat
 // Helpers
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 const formatPreco = v => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const formatData = d => {
   if (!d) return '';
@@ -383,23 +384,27 @@ function renderEmpresa(){
   // diferenciais
   const difContainer=$('#empresa-diferenciais');
   if(difContainer && emp.diferenciais) {
-    difContainer.innerHTML=emp.diferenciais.map(d=>`
+    difContainer.innerHTML=emp.diferenciais.map(d=>{
+      const t=esc(d.titulo||''); const desc=esc(d.desc||''); const icon=String(d.icon||'check').replace(/[^a-z-]/g,'').slice(0,20);
+      return `
       <div class="bg-white rounded-2xl border border-slate-200 p-5 text-center">
-        <div class="w-10 h-10 mx-auto rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3"><i data-lucide="${d.icon}" class="w-5 h-5"></i></div>
-        <h4 class="font-display font-semibold text-sm">${d.titulo}</h4>
-        <p class="text-xs text-slate-500 mt-1">${d.desc}</p>
+        <div class="w-10 h-10 mx-auto rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3"><i data-lucide="${icon}" class="w-5 h-5"></i></div>
+        <h4 class="font-display font-semibold text-sm">${t}</h4>
+        <p class="text-xs text-slate-500 mt-1">${desc}</p>
       </div>
-    `).join('');
+    `}).join('');
   }
   const depoContainer=$('#empresa-depoimentos');
   if(depoContainer && emp.depoimentos){
-    depoContainer.innerHTML=emp.depoimentos.map(d=>`
+    depoContainer.innerHTML=emp.depoimentos.map(d=>{
+      const texto=esc(d.texto||''); const nome=esc(d.nome||'');
+      return `
       <div class="bg-white rounded-2xl border border-slate-200 p-5">
-        <div class="flex gap-1 text-amber-500 text-sm">${'★'.repeat(d.nota||5)}</div>
-        <p class="text-sm text-slate-700 mt-2">“${d.texto}”</p>
-        <div class="text-xs text-slate-500 mt-2 font-medium">${d.nome}</div>
+        <div class="flex gap-1 text-amber-500 text-sm">${'★'.repeat(Math.min(5, Math.max(1, parseInt(d.nota)||5)))}</div>
+        <p class="text-sm text-slate-700 mt-2">“${texto}”</p>
+        <div class="text-xs text-slate-500 mt-2 font-medium">${nome}</div>
       </div>
-    `).join('');
+    `}).join('');
   }
   if(typeof lucide!=='undefined') try{lucide.createIcons();}catch(_){}
 }
@@ -452,7 +457,7 @@ function renderViagens(lista){
     return `
     <article class="card-viagem group bg-white rounded-[20px] overflow-hidden border border-slate-200 hover:border-slate-300 flex flex-col">
       <div class="relative h-44 overflow-hidden">
-        <img src="${o.imagem}" alt="${o.origem} para ${o.destino}" class="w-full h-full object-cover group-hover:scale-[1.05] transition duration-700">
+        <img src="${o.imagem}" alt="${esc(o.origem)} para ${esc(o.destino)}" class="w-full h-full object-cover group-hover:scale-[1.05] transition duration-700">
         <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent"></div>
         <div class="absolute top-3 left-3 flex flex-wrap gap-2 max-w-[calc(100%-72px)] items-start">
           ${destaqueBadge}
@@ -462,9 +467,9 @@ function renderViagens(lista){
         <div class="absolute bottom-3 left-3 right-3 flex items-end justify-between">
           <div>
             <div class="flex items-center gap-1.5 text-white">
-              <span class="font-display font-bold text-lg leading-none">${o.origem}</span>
+              <span class="font-display font-bold text-lg leading-none">${esc(o.origem)}</span>
               <span class="opacity-80">→</span>
-              <span class="font-display font-bold text-lg leading-none">${o.destino}</span>
+              <span class="font-display font-bold text-lg leading-none">${esc(o.destino)}</span>
             </div>
           </div>
           <div class="text-right">
@@ -475,18 +480,18 @@ function renderViagens(lista){
       </div>
       <div class="p-4 flex-1 flex flex-col">
         <div class="flex flex-wrap items-center gap-1.5 text-xs">
-          <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-50 border border-slate-200"><i data-lucide="calendar" class="w-3 h-3"></i> ${o.datas}</span>
+          <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-50 border border-slate-200"><i data-lucide="calendar" class="w-3 h-3"></i> ${esc(o.datas)}</span>
           <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-50 border border-slate-200"><i data-lucide="clock" class="w-3 h-3"></i> ${o.duracao}</span>
           <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-50 border border-slate-200"><i data-lucide="route" class="w-3 h-3"></i> ${escalaTxt}</span>
-          <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-50 border border-slate-200"><i data-lucide="plane" class="w-3 h-3"></i> ${o.empresa}</span>
+          <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-50 border border-slate-200"><i data-lucide="plane" class="w-3 h-3"></i> ${esc(o.empresa)}</span>
           <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-50 border border-slate-200"><i data-lucide="baggage-claim" class="w-3 h-3"></i> ${o.bagagem||'10kg'}</span>
-          ${o.vagasTexto ? `<span class="font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">${o.vagasTexto}</span>` : ''}
+          ${o.vagasTexto ? `<span class="font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">${esc(o.vagasTexto)}</span>` : ''}
         </div>
         <div class="flex items-center justify-between text-xs mt-2">
-          <span class="text-slate-500">${o.empresa} • ${o.tipo}</span>
-          <span class="text-slate-400">${o.aeroportoOrigem||''} → ${o.aeroportoDestino||''}</span>
+          <span class="text-slate-500">${esc(o.empresa)} • ${esc(o.tipo)}</span>
+          <span class="text-slate-400">${esc(o.aeroportoOrigem||"")} → ${esc(o.aeroportoDestino||"")}</span>
         </div>
-        ${o.descricao ? `<p class="text-xs text-slate-500 mt-2 line-clamp-2">${o.descricao}</p>` : ''}
+        ${o.descricao ? `<p class="text-xs text-slate-500 mt-2 line-clamp-2">${esc(o.descricao)}</p>` : ''}
         <button onclick="consultarOferta(${o.id})" class="mt-3 w-full inline-flex items-center justify-center gap-2 bg-[#25D366] text-white rounded-full py-3 text-sm font-bold hover:bg-[#128C7E] transition shadow-[0_4px_12px_rgba(37,211,102,0.25)]">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M19.05 4.94A9.82 9.82 0 0 0 12.04 2a9.82 9.82 0 0 0-8.5 14.82L2 22l5.3-1.39A9.82 9.82 0 0 0 12.04 22a9.82 9.82 0 0 0 9.82-9.82 9.76 9.76 0 0 0-2.81-7.24Zm-7.01 13.7a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.15.83.84-3.07-.2-.32a8.2 8.2 0 0 1-1.26-4.37A8.2 8.2 0 0 1 12.04 3.6a8.2 8.2 0 0 1 8.2 8.2 8.2 8.2 0 0 1-8.2 8.84Zm4.52-6.15c-.25-.12-1.47-.73-1.7-.81s-.39-.12-.56.12-.64.81-.79.97-.29.19-.54.06a6.86 6.86 0 0 1-2-1.24 7.56 7.56 0 0 1-1.4-1.73c-.15-.25 0-.39.11-.51s.25-.29.37-.43a1.66 1.66 0 0 0 .25-.41.46.46 0 0 0 0-.43c0-.12-.56-1.35-.77-1.85s-.41-.43-.56-.44h-.48a.9.9 0 0 0-.66.31 2.77 2.77 0 0 0-.86 2.05 4.8 4.8 0 0 0 1 2.57 11 11 0 0 0 4.2 3.71 14.1 14.1 0 0 0 1.4.52 3.36 3.36 0 0 0 1.53.1 2.5 2.5 0 0 0 1.64-1.15.2.2 0 0 0 0-.2c-.06-.1-.25-.16-.5-.28Z"/></svg>
           Consultar no WhatsApp
@@ -524,14 +529,14 @@ function consultarOferta(id, parcelasEscolhidasParam){
   const escalaTxt = o.escalas===0 ? 'Voo direto' : `${o.escalas} escala${o.escalas>1?'s':''}`;
   const aeroTxt = o.aeroportoOrigem && o.aeroportoDestino ? `${o.aeroportoOrigem}→${o.aeroportoDestino}` : '';
   let msg=`Olá! Vi a oferta no site *${empresaData.nome||configData.nomeEmpresa||'Vou com Milhas'}*%0A%0A`+
-    `✈️ *${o.origem} → ${o.destino}* ${aeroTxt?`(${aeroTxt})`:''}%0A`+
-    `📅 Datas: ${o.datas} • ${o.duracao} • ${escalaTxt} • Bag: ${o.bagagem||'10kg'}%0A`+
-    `💰 ${milhasTxt}${o.precoAntigo?` (de ${formatPreco(o.precoAntigo)})`:''} • ${o.empresa} • ${o.tipo}%0A`+
+    `✈️ *${esc(o.origem)} → ${esc(o.destino)}* ${aeroTxt?`(${aeroTxt})`:''}%0A`+
+    `📅 Datas: ${esc(o.datas)} • ${o.duracao} • ${escalaTxt} • Bag: ${o.bagagem||'10kg'}%0A`+
+    `💰 ${milhasTxt}${o.precoAntigo?` (de ${formatPreco(o.precoAntigo)})`:''} • ${esc(o.empresa)} • ${esc(o.tipo)}%0A`+
     `${parcelaTxt?`💳 Parcelado em ${parcelaTxt} • `:''}⏳ Validade: ${o.validadeAte?formatData(o.validadeAte):'enquanto durar'}%0A`+
     `🎫 Oferta #${o.id}%0A%0A`+
     `Pode confirmar disponibilidade?`;
   // lead - local + Blob global
-  const leadPayload = { ofertaId:o.id, rota:`${o.origem}→${o.destino}`, datas:o.datas, preco:formatPreco(o.preco), createdAt:new Date().toISOString() };
+  const leadPayload = { ofertaId:o.id, rota:`${esc(o.origem)}→${esc(o.destino)}`, datas:o.datas, preco:formatPreco(o.preco), createdAt:new Date().toISOString() };
   try{
     const leads=JSON.parse(localStorage.getItem('vf_leads')||'[]');
     leads.push({ id:Date.now(), ...leadPayload });
@@ -568,12 +573,12 @@ function renderDestaques(){
   wrapper.innerHTML=destaques.map(o=>`
     <div class="swiper-slide">
       <a href="oferta.html?id=${o.id}" class="block rounded-2xl overflow-hidden relative h-[160px] group">
-        <img src="${o.imagem}" alt="${o.origem} para ${o.destino}" class="w-full h-full object-cover group-hover:scale-[1.05] transition duration-500">
+        <img src="${o.imagem}" alt="${esc(o.origem)} para ${esc(o.destino)}" class="w-full h-full object-cover group-hover:scale-[1.05] transition duration-500">
         <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
         <div class="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-[#F9A521] text-[#1E3145] text-[10px] font-bold">🔥 Destaque</div>
         <div class="absolute bottom-3 left-3 text-white">
-          <div class="font-display font-bold">${o.destino}</div>
-          <div class="text-xs opacity-90">A partir de ${formatPreco(o.preco)} • ${o.datas}</div>
+          <div class="font-display font-bold">${esc(o.destino)}</div>
+          <div class="text-xs opacity-90">A partir de ${formatPreco(o.preco)} • ${esc(o.datas)}</div>
         </div>
       </a>
     </div>
@@ -629,14 +634,14 @@ function renderOfertaDetalhe(o){
   if(imgDetalhes) { imgDetalhes.src=o.imagem; }
   const rotaOferta=$('#oferta-rota');
   const rotaDetalhes=$('#detalhes-rota');
-  if(rotaOferta) rotaOferta.textContent=`${o.origem} → ${o.destino}`;
-  if(rotaDetalhes) rotaDetalhes.textContent=`${o.origem} → ${o.destino}`;
+  if(rotaOferta) rotaOferta.textContent=`${esc(o.origem)} → ${esc(o.destino)}`;
+  if(rotaDetalhes) rotaDetalhes.textContent=`${esc(o.origem)} → ${esc(o.destino)}`;
   const dataOferta=$('#oferta-datas');
   const dataDetalhes=$('#detalhes-data');
-  if(dataOferta) dataOferta.textContent=`${o.datas} • ${o.duracao} • ${o.empresa} • ${o.tipo}`;
-  if(dataDetalhes) dataDetalhes.textContent=`${o.datas} • ${o.duracao} • ${o.empresa} • ${o.tipo}`;
+  if(dataOferta) dataOferta.textContent=`${esc(o.datas)} • ${o.duracao} • ${esc(o.empresa)} • ${esc(o.tipo)}`;
+  if(dataDetalhes) dataDetalhes.textContent=`${esc(o.datas)} • ${o.duracao} • ${esc(o.empresa)} • ${esc(o.tipo)}`;
   const emp=$('#detalhes-empresa');
-  if(emp) emp.textContent=`${o.empresa} • ${o.tipo}`;
+  if(emp) emp.textContent=`${esc(o.empresa)} • ${esc(o.tipo)}`;
   // preenche cards empresa/tipo/duracao direto (antes dependia de polling frágil)
   const set=(id,val)=>{ const el=document.getElementById(id); if(el) el.textContent=val||'—'; };
   set('oferta-empresa', o.empresa);
@@ -707,7 +712,7 @@ function renderOfertaDetalhe(o){
   const escalaEl=$('#oferta-escalas')||$('#detalhes-escalas')||$('#detalhes-escalas-card');
   if(escalaEl) escalaEl.textContent=o.escalas===0? 'Direto' : `${o.escalas} escala${o.escalas>1?'s':''}`;
   const aeroEl=$('#oferta-aeroportos');
-  if(aeroEl) aeroEl.textContent=o.aeroportoOrigem && o.aeroportoDestino ? `${o.aeroportoOrigem} → ${o.aeroportoDestino}` : `${o.origem} → ${o.destino}`;
+  if(aeroEl) aeroEl.textContent=o.aeroportoOrigem && o.aeroportoDestino ? `${o.aeroportoOrigem} → ${o.aeroportoDestino}` : `${esc(o.origem)} → ${esc(o.destino)}`;
   const classeEl=$('#detalhes-classe');
   if(classeEl) classeEl.textContent=o.tipo||'Econômica';
   const resumoMilhas=$('#resumo-milhas');

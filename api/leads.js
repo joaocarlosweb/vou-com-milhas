@@ -3,6 +3,17 @@ const jwt = require('jsonwebtoken');
 const cookie = require('cookie');
 const fs = require('fs');
 const path = require('path');
+const { rate } = require('./_rate');
+
+function sanitize(str, max) {
+  let s = String(str || '').replace(/[\u0000-\u001F\u007F<>]/g, '').trim();
+  if (max) s = s.slice(0, max);
+  return s;
+}
+function sanitizePhone(s) {
+  s = String(s || '').replace(/[^\d+\s\-()]/g, '').slice(0, 20).trim();
+  return s;
+}
 
 function verifyAuth(req) {
   const cookies = cookie.parse(req.headers.cookie || '');
@@ -247,6 +258,7 @@ module.exports = async (req, res) => {
   }
 
   if (req.method === 'POST') {
+    if (!rate({ keyPrefix: 'lead', limit: 10, windowMs: 60_000, res })(req)) return;
     let body = req.body;
     if (!body || typeof body === 'string' || Buffer.isBuffer(body)) {
       if (Buffer.isBuffer(body)) {
@@ -268,21 +280,25 @@ module.exports = async (req, res) => {
     if (!body || typeof body !== 'object' || Array.isArray(body)) {
       return res.status(400).json({ error: 'Body inválido' });
     }
+    const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,"&#39;");
+    const stripTags = s => String(s||'').replace(/<[^>]*>/g, '');
+    let cleanTelefone = String(body.telefone||'').replace(/[^0-9+\s\-]/g,'').slice(0,20);
+    if (cleanTelefone && !/^[0-9+\s\-]{8,20}$/.test(cleanTelefone)) cleanTelefone = '';
     const novo = {
       id: Date.now(),
-      ofertaId: body.ofertaId || body.viagemId || null,
-      viagemId: body.viagemId || body.ofertaId || null,
-      rota: body.rota || body.origem || 'WhatsApp Geral',
-      datas: body.datas || body.data || '',
-      preco: body.preco || '',
-      nome: (body.nome || '').toString().slice(0, 80),
-      telefone: (body.telefone || '').toString().slice(0, 20),
-      assentos: body.assentos || '',
-      qtd: body.qtd || 1,
-      origem: body.origem || req.headers['referer'] || req.headers['origin'] || 'site',
-      tipo: body.tipo || (body.ofertaId ? 'oferta' : 'whatsapp-geral'),
+      ofertaId: body.ofertaId ? Number(body.ofertaId) : (body.viagemId ? Number(body.viagemId) : null),
+      viagemId: body.viagemId ? Number(body.viagemId) : (body.ofertaId ? Number(body.ofertaId) : null),
+      rota: esc(stripTags(body.rota || body.origem || 'WhatsApp Geral')).slice(0, 80),
+      datas: esc(stripTags(body.datas || body.data || '')).slice(0, 40),
+      preco: esc(String(body.preco||'').slice(0,30)),
+      nome: esc(stripTags(body.nome||'')).slice(0, 80),
+      telefone: cleanTelefone,
+      assentos: esc(String(body.assentos||'').slice(0,30)),
+      qtd: Math.min(Math.max(parseInt(body.qtd)||1, 1), 10),
+      origem: esc(String(body.origem || req.headers['referer'] || req.headers['origin'] || 'site').slice(0,120)),
+      tipo: esc(String(body.tipo||'').slice(0,20)) || (body.ofertaId ? 'oferta' : 'whatsapp-geral'),
       createdAt: new Date().toISOString(),
-      ip: req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.headers['x-real-ip'] || ''
+      ip: (req.headers['x-forwarded-for']||'').split(',')[0]?.trim().slice(0,45) || (req.headers['x-real-ip']||'').slice(0,45) || ''
     };
     const result = await saveLeadAppend(novo);
     if (!result.ok) return res.status(500).json({ error: 'Falha ao salvar lead', detail: result.error });
