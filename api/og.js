@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-// Helper para buscar oferta por id via Blob ou arquivo local
+// Helper para buscar oferta por id via KV -> Blob -> arquivo local (KV é autoritativo)
 async function getOfertaById(id) {
   const tryFetch = async (url) => {
     try {
@@ -17,7 +17,16 @@ async function getOfertaById(id) {
     } catch {}
     return null;
   };
-  // tenta Blob primeiro
+  // 1) KV (Neon) - forte consistência, inclui id 11 criado recentemente
+  try {
+    const { kvGet } = require('./_db');
+    const data = await kvGet('ofertas');
+    if (Array.isArray(data) && data.length) {
+      const found = data.find(o => String(o.id) === String(id));
+      if (found) return found;
+    }
+  } catch (e) { console.warn('og KV falhou', e.message); }
+  // 2) Blob
   try {
     const token = process.env.BLOB_READ_WRITE_TOKEN;
     if (token) {
@@ -39,7 +48,16 @@ async function getOfertaById(id) {
       }
     }
   } catch {}
-  // fallback arquivo local
+  // 3) /tmp fallback
+  try {
+    const tmpPath = path.join('/tmp', 'ofertas.json');
+    if (fs.existsSync(tmpPath)) {
+      const data = JSON.parse(fs.readFileSync(tmpPath, 'utf-8'));
+      const found = data.find(o => String(o.id) === String(id));
+      if (found) return found;
+    }
+  } catch {}
+  // 4) arquivo local seed
   try {
     const filePath = path.join(process.cwd(), 'data', 'ofertas.json');
     if (fs.existsSync(filePath)) {
@@ -65,7 +83,7 @@ module.exports = async (req, res) => {
       const filePath = path.join(process.cwd(), 'oferta.html');
       let html = fs.readFileSync(filePath, 'utf-8');
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+      res.setHeader('Cache-Control', 'no-store, max-age=0, must-revalidate');
       return res.status(200).send(html);
     } catch {
       return res.status(404).send('Not found');
@@ -183,7 +201,8 @@ module.exports = async (req, res) => {
 
   // Adiciona canonical se não existir (já está no ogTags)
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+  res.setHeader('Cache-Control', 'no-store, max-age=0, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
   res.setHeader('X-Robots-Tag', 'index, follow');
   return res.status(200).send(html);
 };
