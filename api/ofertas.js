@@ -13,7 +13,13 @@ function verifyAuth(req) {
 }
 
 async function getOfertasFromBlobOrFile() {
-  // tenta Blob primeiro (global) - direct URL + list fallback, com cache bust
+  // 1) tenta KV (Neon) primeiro - forte consistência, sem suspensão
+  try {
+    const { kvGet } = require('./_db');
+    const data = await kvGet('ofertas');
+    if (Array.isArray(data) && data.length) return data;
+  } catch {}
+  // 2) tenta Blob (global) - direct URL + list fallback, com cache bust
   const tryFetch = async (url) => {
     try {
       const bustUrl = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
@@ -46,7 +52,7 @@ async function getOfertasFromBlobOrFile() {
   } catch (e) {
     console.warn('Blob read ofertas falhou, fallback file', e.message);
   }
-  // fallback: tenta /tmp (serverless writable) e data/ofertas.json (dev/seed)
+  // 3) fallback: tenta /tmp (serverless writable) e data/ofertas.json (dev/seed)
   const tmpPath = path.join('/tmp', 'ofertas.json');
   try {
     if (fs.existsSync(tmpPath)) {
@@ -93,32 +99,43 @@ module.exports = async (req, res) => {
     }
     if (!Array.isArray(body)) return res.status(400).json({ error: 'Esperado array de ofertas' });
 
-    // tenta salvar no Blob se token existir, senão tenta fs/tmp
+    // tenta salvar: 1) KV (Neon) 2) Blob 3) /tmp
     let saved = false;
     let lastErr = null;
+    // 1) KV
     try {
-      const token = process.env.BLOB_READ_WRITE_TOKEN;
-      if (token) {
-        await put('ofertas.json', JSON.stringify(body, null, 2), {
-          access: 'public',
-          contentType: 'application/json',
-          addRandomSuffix: false,
-          allowOverwrite: true,
-          cacheControlMaxAge: 0,
-          token
-        });
-        saved = true;
-      }
+      const { kvSet } = require('./_db');
+      const ok = await kvSet('ofertas', body);
+      if (ok) saved = true;
     } catch (e) {
-      console.error('Erro ao salvar ofertas no Blob (fallback para /tmp)', e.message);
       lastErr = e;
+      console.warn('KV save ofertas falhou, tentando Blob', e.message);
+    }
+    // 2) Blob
+    if (!saved) {
+      try {
+        const token = process.env.BLOB_READ_WRITE_TOKEN;
+        if (token) {
+          await put('ofertas.json', JSON.stringify(body, null, 2), {
+            access: 'public',
+            contentType: 'application/json',
+            addRandomSuffix: false,
+            allowOverwrite: true,
+            cacheControlMaxAge: 0,
+            token
+          });
+          saved = true;
+        }
+      } catch (e) {
+        console.error('Erro ao salvar ofertas no Blob (fallback para /tmp)', e.message);
+        lastErr = e;
+      }
     }
     if (!saved) {
-      // fallback: /tmp (serverless) e data/ (dev) - /tmp é o que persiste entre invokes no mesmo lambda
+      // 3) fallback: /tmp (serverless) e data/ (dev)
       try {
         const tmpPath = path.join('/tmp', 'ofertas.json');
         fs.writeFileSync(tmpPath, JSON.stringify(body, null, 2), 'utf-8');
-        // tenta também data/ para dev
         try {
           const filePath = path.join(process.cwd(), 'data', 'ofertas.json');
           fs.writeFileSync(filePath, JSON.stringify(body, null, 2), 'utf-8');

@@ -24,6 +24,12 @@ async function getConfigFromBlobOrFile() {
     } catch {}
     return null;
   };
+  // 1) KV primeiro
+  try {
+    const { kvGet } = require('./_db');
+    const data = await kvGet('config');
+    if (data && typeof data === 'object' && data.whatsapp) return data;
+  } catch {}
   try {
     const token = process.env.BLOB_READ_WRITE_TOKEN;
     if (token) {
@@ -90,22 +96,33 @@ module.exports = async (req, res) => {
     };
     let saved = false;
     let lastErr = null;
+    // 1) KV
     try {
-      const token = process.env.BLOB_READ_WRITE_TOKEN;
-      if (token) {
-        await put('config.json', JSON.stringify(toSave, null, 2), {
-          access: 'public',
-          contentType: 'application/json',
-          addRandomSuffix: false,
-          allowOverwrite: true,
-          cacheControlMaxAge: 0,
-          token
-        });
-        saved = true;
-      }
+      const { kvSet } = require('./_db');
+      const ok = await kvSet('config', toSave);
+      if (ok) saved = true;
     } catch (e) {
-      console.error('Erro salvar config no Blob (fallback /tmp)', e.message);
       lastErr = e;
+      console.warn('KV save config falhou, tentando Blob', e.message);
+    }
+    if (!saved) {
+      try {
+        const token = process.env.BLOB_READ_WRITE_TOKEN;
+        if (token) {
+          await put('config.json', JSON.stringify(toSave, null, 2), {
+            access: 'public',
+            contentType: 'application/json',
+            addRandomSuffix: false,
+            allowOverwrite: true,
+            cacheControlMaxAge: 0,
+            token
+          });
+          saved = true;
+        }
+      } catch (e) {
+        console.error('Erro salvar config no Blob (fallback /tmp)', e.message);
+        lastErr = e;
+      }
     }
     if (!saved) {
       try {

@@ -25,6 +25,11 @@ async function getEmpresaFromBlobOrFile() {
     return null;
   };
   try {
+    const { kvGet } = require('./_db');
+    const data = await kvGet('empresa');
+    if (data && typeof data === 'object' && Object.keys(data).length) return data;
+  } catch {}
+  try {
     const token = process.env.BLOB_READ_WRITE_TOKEN;
     if (token) {
       const directUrl = 'https://obl32zedqvcafvwk.public.blob.vercel-storage.com/empresa.json';
@@ -86,21 +91,31 @@ module.exports = async (req, res) => {
     let saved = false;
     let lastErr = null;
     try {
-      const token = process.env.BLOB_READ_WRITE_TOKEN;
-      if (token) {
-        await put('empresa.json', JSON.stringify(body, null, 2), {
-          access: 'public',
-          contentType: 'application/json',
-          addRandomSuffix: false,
-          allowOverwrite: true,
-          cacheControlMaxAge: 0,
-          token
-        });
-        saved = true;
-      }
+      const { kvSet } = require('./_db');
+      const ok = await kvSet('empresa', body);
+      if (ok) saved = true;
     } catch (e) {
-      console.error('Erro salvar empresa no Blob (fallback /tmp)', e.message);
       lastErr = e;
+      console.warn('KV save empresa falhou, tentando Blob', e.message);
+    }
+    if (!saved) {
+      try {
+        const token = process.env.BLOB_READ_WRITE_TOKEN;
+        if (token) {
+          await put('empresa.json', JSON.stringify(body, null, 2), {
+            access: 'public',
+            contentType: 'application/json',
+            addRandomSuffix: false,
+            allowOverwrite: true,
+            cacheControlMaxAge: 0,
+            token
+          });
+          saved = true;
+        }
+      } catch (e) {
+        console.error('Erro salvar empresa no Blob (fallback /tmp)', e.message);
+        lastErr = e;
+      }
     }
     if (!saved) {
       try {

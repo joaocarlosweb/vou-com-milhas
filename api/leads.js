@@ -13,6 +13,12 @@ function verifyAuth(req) {
 }
 
 async function getLeadsFromBlobOrFile() {
+  // 1) KV (Neon) primeiro - forte consistência
+  try {
+    const { kvGet } = require('./_db');
+    const data = await kvGet('leads');
+    if (Array.isArray(data) && data.length) return data;
+  } catch {}
   // Novo modelo: cada lead é um arquivo em leads/<id>.json (append, sem race)
   // Mantém compat com legado leads.json único
   const tryFetch = async (url) => {
@@ -118,8 +124,20 @@ async function getLeadsFromBlobOrFile() {
 }
 
 async function saveLeadAppend(lead) {
+  // 1) Tenta KV primeiro (Neon) - forte consistência
+  try {
+    const { kvGet, kvSet } = require('./_db');
+    const existing = await kvGet('leads');
+    const arr = Array.isArray(existing) ? existing : [];
+    arr.push(lead);
+    if (arr.length > 5000) arr.splice(0, arr.length - 5000);
+    const ok = await kvSet('leads', arr);
+    if (ok) return { ok: true };
+  } catch (e) {
+    console.warn('KV saveLeadAppend falhou, tentando Blob', e.message);
+  }
   const token = process.env.BLOB_READ_WRITE_TOKEN;
-  // tenta Blob se token existir
+  // 2) tenta Blob se token existir
   if (token) {
     try {
       const key = `leads/${lead.id}-${Math.random().toString(36).slice(2,6)}.json`;
@@ -136,7 +154,7 @@ async function saveLeadAppend(lead) {
       // fallback para /tmp
     }
   }
-  // fallback /tmp (serverless) - garante que POST não dê 500 mesmo com Blob suspenso
+  // 3) fallback /tmp (serverless) - garante que POST não dê 500 mesmo com Blob suspenso
   try {
     const tmpDir = path.join('/tmp', 'leads');
     if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
@@ -162,8 +180,15 @@ async function saveLeadAppend(lead) {
 }
 
 async function clearAllLeads() {
+  // 1) Limpa KV primeiro
+  try {
+    const { kvSet } = require('./_db');
+    await kvSet('leads', []);
+  } catch (e) {
+    console.warn('clear KV leads falhou', e.message);
+  }
   const token = process.env.BLOB_READ_WRITE_TOKEN;
-  // tenta limpar Blob se token existir, mas não falha se não existir (fallback /tmp)
+  // 2) tenta limpar Blob se token existir, mas não falha se não existir (fallback /tmp)
   if (token) {
     try {
       const blobs = await list({ prefix: 'leads', token });
@@ -185,7 +210,7 @@ async function clearAllLeads() {
       console.warn('clear Blob falhou, tentando /tmp', e.message);
     }
   }
-  // sempre limpa /tmp
+  // 3) sempre limpa /tmp
   try {
     const tmpDir = path.join('/tmp', 'leads');
     if (fs.existsSync(tmpDir)) {
