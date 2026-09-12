@@ -77,6 +77,7 @@ html.lenis, html.lenis body { height: auto; }
   transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
   will-change: transform;
 }
+.stat-card { opacity: 1 !important; transform: none; }
 .card-viagem:hover {
   transform: translateY(-6px);
   box-shadow: 0 20px 40px -12px rgba(0,0,0,0.15);

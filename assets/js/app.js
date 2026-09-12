@@ -39,12 +39,22 @@ const vagasLivres = v => {
   if (v.vagasTexto !== undefined) return v.status === 'ativa' ? 10 : 0;
   return (v.totalAssentos || 46) - (v.ocupados?.length || 0);
 };
+function parseDataLocal(s){
+  if(!s) return null;
+  const m=String(s).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(!m) return null;
+  return new Date(Number(m[1]), Number(m[2])-1, Number(m[3]));
+}
 function isAtiva(o) {
   if (o.status === 'encerrada' || o.status === 'pausada') return false;
   if (o.validadeAte) {
     const hoje = new Date(); hoje.setHours(0,0,0,0);
-    const val = new Date(o.validadeAte); val.setHours(0,0,0,0);
-    if (val < hoje) return false;
+    const v = parseDataLocal(o.validadeAte);
+    if(v){ v.setHours(0,0,0,0); if(v < hoje) return false; }
+    else {
+      const vv = new Date(o.validadeAte); vv.setHours(0,0,0,0);
+      if(!isNaN(vv) && vv < hoje) return false;
+    }
   }
   return true;
 }
@@ -447,7 +457,9 @@ function renderViagens(lista){
     const validadeTxt = (() => {
       if(!o.validadeAte) return '';
       const hoje=new Date(); hoje.setHours(0,0,0,0);
-      const val=new Date(o.validadeAte); val.setHours(0,0,0,0);
+      let val=parseDataLocal(o.validadeAte);
+      if(!val){ val=new Date(o.validadeAte); val.setHours(0,0,0,0); }
+      if(!val || isNaN(val)) return '';
       const diff=Math.ceil((val-hoje)/86400000);
       if(diff<0) return '<span class="px-2 py-1 rounded-full text-xs bg-red-50 text-red-700 border border-red-200 whitespace-nowrap shrink-0 inline-flex items-center">⏳ Encerrada</span>';
       if(diff===0) return '<span class="px-2 py-1 rounded-full text-xs bg-red-50 text-red-700 border border-red-200 whitespace-nowrap shrink-0 inline-flex items-center">⏳ Encerra hoje</span>';

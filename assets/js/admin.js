@@ -18,9 +18,23 @@ let editingId = null;
 let filtroStatus = 'ativas';
 let imagemTempDataUrl = null;
 
+function parseDataLocal(s){
+  if(!s) return null;
+  const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(!m) return null;
+  return new Date(Number(m[1]), Number(m[2])-1, Number(m[3]));
+}
 function isAtiva(o){
   if(o.status==='encerrada'||o.status==='pausada') return false;
-  if(o.validadeAte){ const h=new Date(); h.setHours(0,0,0,0); const v=new Date(o.validadeAte); v.setHours(0,0,0,0); if(v<h) return false; }
+  if(o.validadeAte){
+    const h=new Date(); h.setHours(0,0,0,0);
+    const v=parseDataLocal(o.validadeAte);
+    if(v){ v.setHours(0,0,0,0); if(v<h) return false; }
+    else {
+      const vv=new Date(o.validadeAte); vv.setHours(0,0,0,0);
+      if(!isNaN(vv) && vv<h) return false;
+    }
+  }
   return true;
 }
 function normalizar(v){
@@ -233,23 +247,41 @@ async function checkAuth(){
 }
 
 function bindEvents(){
+  // mostra campo TOTP se servidor exigir (detecta via tentativa)
+  const wrapTotp = $('#wrap-totp');
   $('#form-login')?.addEventListener('submit', async e=>{
     e.preventDefault();
     const u=$('#login-user').value.trim(), p=$('#login-pass').value;
+    const totp = $('#login-totp')?.value.trim();
     const btn=e.submitter || document.querySelector('#form-login button[type="submit"]');
     if(btn){ btn.disabled=true; btn.textContent='Entrando...'; }
     try {
+      const body = { user: u, pass: p };
+      if (totp) body.totp = totp;
+      // se TOTP estiver visível, exige preenchimento
+      if (wrapTotp && !wrapTotp.classList.contains('hidden') && !totp) {
+        toast('Informe o código 2FA de 6 dígitos','warn');
+        if(btn){ btn.disabled=false; btn.innerHTML='Entrar no painel <i data-lucide="arrow-right" class="w-4 h-4"></i>'; lucide.createIcons(); }
+        return;
+      }
       const r = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ user: u, pass: p })
+        body: JSON.stringify(body)
       });
       const data = await r.json();
       if(r.ok && data.ok){
         localStorage.setItem('vf_auth','ok');
         toast('Bem-vindo, Vou com Milhas!','success');
         await checkAuth();
+        return;
+      }
+      // se servidor pede 2FA, mostra campo
+      if (data.error && data.error.includes('2FA')) {
+        if (wrapTotp) { wrapTotp.classList.remove('hidden'); lucide.createIcons(); $('#login-totp')?.focus(); }
+        toast(data.error,'warn');
+        shake($('#login-card'));
         return;
       }
       toast(data.error || 'Usuário ou senha inválidos','warn');
@@ -349,7 +381,17 @@ async function renderStats(){
   $('#stat-leads').textContent=leads.length;
   $('#stat-leads-hoje').textContent=leadsHoje;
   $('#stat-whatsapp-preview').textContent=config.whatsapp||'5584998979071';
-  if(typeof gsap!=='undefined') gsap.from('.stat-card',{y:10,opacity:0,duration:0.4,stagger:0.06,ease:'power2.out'});
+  // stat-encerradas2 duplicata no header escuro
+  const enc2=$('#stat-encerradas2'); if(enc2) enc2.textContent=encerradas;
+  // GSAP só no primeiro render - interval só atualiza números sem re-animar (evita opacity 0 travado)
+  if(typeof gsap!=='undefined'){
+    if(!window.__statsAnimated){
+      gsap.fromTo('.stat-card',{y:10,opacity:0},{y:0,opacity:1,duration:0.4,stagger:0.06,ease:'power2.out',clearProps:'opacity,transform',overwrite:'auto'});
+      window.__statsAnimated=true;
+    } else {
+      gsap.set('.stat-card',{opacity:1, y:0, clearProps:'transform'});
+    }
+  }
 }
 
 function getFiltradas(){
@@ -375,7 +417,10 @@ function renderOfertas(){
     const ativa=isAtiva(o);
     const validadeBadge=(()=>{
       if(!o.validadeAte) return '<span class="text-xs text-slate-400">—</span>';
-      const h=new Date(); h.setHours(0,0,0,0); const v=new Date(o.validadeAte); v.setHours(0,0,0,0);
+      const h=new Date(); h.setHours(0,0,0,0);
+      let v=parseDataLocal(o.validadeAte);
+      if(!v){ v=new Date(o.validadeAte); v.setHours(0,0,0,0); }
+      if(!v || isNaN(v)) return '<span class="text-xs text-slate-400">—</span>';
       const diff=Math.ceil((v-h)/86400000);
       if(!ativa) return '<span class="px-2 py-1 rounded-full text-xs bg-red-50 text-red-700 border border-red-200">Encerrada</span>';
       if(diff===0) return '<span class="px-2 py-1 rounded-full text-xs bg-red-50 text-red-700 border border-red-200">Encerra hoje</span>';
@@ -624,9 +669,11 @@ window.toggleStatus=async id=>{
       const titleEl=$('#modal-title'); if(titleEl) titleEl.textContent='Reativar oferta - escolha nova data';
       const btnEl=$('#btn-salvar-oferta'); if(btnEl) btnEl.textContent='Reativar oferta';
       const vInput=$('#f-validade');
-      const h=new Date(); h.setHours(0,0,0,0); const v=new Date(o.validadeAte); v.setHours(0,0,0,0);
+      const h=new Date(); h.setHours(0,0,0,0);
+      let v=parseDataLocal(o.validadeAte);
+      if(!v){ v=new Date(o.validadeAte); v.setHours(0,0,0,0); }
       if(vInput){
-        if(!o.validadeAte || isNaN(v) || v<h){
+        if(!o.validadeAte || !v || isNaN(v) || v<h){
           const amanha=new Date(); amanha.setDate(amanha.getDate()+1);
           vInput.value=amanha.toISOString().slice(0,10);
         }
