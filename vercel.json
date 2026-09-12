@@ -2,12 +2,17 @@
   "functions": {
     "api/*.js": { "maxDuration": 10 }
   },
-  "cleanUrls": true,
+  "cleanUrls": false,
   "rewrites": [
     { "source": "/oferta.html", "destination": "/api/og" },
+    { "source": "/oferta", "destination": "/api/og" },
     { "source": "/api/(.*)", "destination": "/api/$1" }
   ],
   "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "no-store, max-age=0, must-revalidate" }]
+    },
     {
       "source": "/oferta.html",
       "headers": [{ "key": "Cache-Control", "value": "no-store, max-age=0, must-revalidate" }]
