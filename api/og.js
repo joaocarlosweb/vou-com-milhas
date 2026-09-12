@@ -167,9 +167,14 @@ module.exports = async (req, res) => {
   })}</script>
 `;
 
-  // Injeta substituindo <title> e adicionando após <meta name="viewport">
+  // Injeta substituindo <title> e adicionando após <meta name="viewport"> + garante base para assets funcionarem via /api/og
   // Remove title antigo se existir e injeta novo bloco
   html = html.replace(/<title>.*?<\/title>/s, ogTags.trim());
+
+  // Garante <base href="/"> para assets relativos funcionarem quando servido via /api/og
+  if (!html.includes('<base href=')) {
+    html = html.replace('<head>', '<head><base href="/">');
+  }
 
   // Se não tinha title (fallback), injeta após viewport
   if (!html.includes('og:title')) {
