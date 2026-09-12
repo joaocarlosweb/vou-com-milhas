@@ -4,12 +4,18 @@ const cookie = require('cookie');
 const fs = require('fs');
 const path = require('path');
 
-function verifyAuth(req) {
+async function verifyAuth(req) {
   const cookies = cookie.parse(req.headers.cookie || '');
   const token = cookies['__Host-token'] || cookies.token;
   const JWT_SECRET = process.env.JWT_SECRET;
   if (!token || !JWT_SECRET) return false;
-  try { jwt.verify(token, JWT_SECRET, { issuer: 'vou-com-milhas', audience: 'admin' }); return true; } catch { return false; }
+  try {
+    const payload = jwt.verify(token, JWT_SECRET, { issuer: 'vou-com-milhas', audience: 'admin' });
+    if (payload.jti) {
+      try { const { kvGet } = require('./_db'); const revoked = await kvGet(`revoked:${payload.jti}`); if (revoked) return false; } catch {}
+    }
+    return true;
+  } catch { return false; }
 }
 
 function setCors(req, res) {
@@ -104,7 +110,7 @@ module.exports = async (req, res) => {
   }
 
   // POST/PUT/DELETE precisam auth
-  if (!verifyAuth(req)) return res.status(401).json({ error: 'Não autorizado' });
+  if (!await verifyAuth(req)) return res.status(401).json({ error: 'Não autorizado' });
 
   if (req.method === 'POST' || req.method === 'PUT') {
     let body = req.body;
@@ -124,15 +130,25 @@ module.exports = async (req, res) => {
     const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     const strip = s => String(s||'').replace(/<[^>]*>/g,'').trim();
     const sanitizeImagem = (url) => {
-      const s = String(url||'').trim().slice(0,2000);
-      if (!s) return '';
-      if (s.startsWith('https://')) {
-        try { const u = new URL(s); if (u.protocol !== 'https:') return ''; return s; } catch { return ''; }
+      const raw = String(url||'').trim();
+      if (!raw) return '';
+      // data URL: permite até 1.5MB, não trunca
+      if (raw.startsWith('data:image/') && raw.includes(';base64,')) {
+        if (raw.length > 1500000) return '';
+        if (raw.includes('image/svg')) return '';
+        return raw;
       }
-      if (s.startsWith('data:image/') && s.includes(';base64,')) {
-        if (s.length > 1500000) return '';
-        if (s.includes('image/svg')) return '';
-        return s;
+      const s = raw.slice(0,2000);
+      if (s.startsWith('https://')) {
+        try {
+          const u = new URL(s);
+          if (u.protocol !== 'https:') return '';
+          const host = u.hostname.toLowerCase();
+          const allowed = ['images.unsplash.com', 'public.blob.vercel-storage.com', 'vercel-storage.com', 'obl32zedqvcafvwk.public.blob.vercel-storage.com'];
+          const ok = allowed.some(d => host === d || host.endsWith('.' + d) || host.endsWith(d));
+          if (!ok) return '';
+          return s;
+        } catch { return ''; }
       }
       return '';
     };
