@@ -610,8 +610,7 @@ window.toggleStatus=async id=>{
 };
 window.copiarLinkCanal=(id, encerrada=false)=>{
   const o=ofertas.find(x=>x.id===id); if(!o) return;
-  const baseUrl=location.origin + location.pathname.replace('admin.html','');
-  const link=`${baseUrl}api/og?id=${id}`;
+  const link=`${location.origin}/api/og?id=${id}`;
   let msg='';
   if(encerrada || !isAtiva(o)){
     msg=`⛔ ENCERRADA - ${o.origem}→${o.destino} ${o.datas} por ${formatPreco(o.preco)} esgotou! Fique no canal para a próxima: ${link}`;
@@ -624,8 +623,7 @@ window.copiarLead=msgEnc=>{ const m=decodeURIComponent(msgEnc); navigator.clipbo
 window.copiarTodasAtivas=()=>{
   const ativas=ofertas.filter(isAtiva);
   if(ativas.length===0) return toast('Nenhuma oferta ativa','warn');
-  const baseUrl=location.origin + location.pathname.replace('admin.html','');
-  const txt=ativas.map(o=> `• ${o.origem}→${o.destino} ${o.datas} ${formatPreco(o.preco)} - ${baseUrl}api/og?id=${o.id}`).join('\n');
+  const txt=ativas.map(o=> `• ${o.origem}→${o.destino} ${o.datas} ${formatPreco(o.preco)} - ${location.origin}/api/og?id=${o.id}`).join('\n');
   navigator.clipboard.writeText(`✈️ OFERTAS ATIVAS VOU COM MILHAS\n${txt}\n\nConsulte no WhatsApp: https://wa.me/${config.whatsapp}`).then(()=> toast('Todas as ofertas copiadas!','success'));
 };
 
