@@ -68,14 +68,14 @@ module.exports = async (req, res) => {
     }
   }
 
-  const token = jwt.sign({ user, jti: require('crypto').randomUUID() }, JWT_SECRET, { expiresIn: '30m', issuer: 'vou-com-milhas', audience: 'admin' });
+  const token = jwt.sign({ user, jti: require('crypto').randomUUID() }, JWT_SECRET, { expiresIn: '2h', issuer: 'vou-com-milhas', audience: 'admin' });
 
   res.setHeader('Set-Cookie', cookie.serialize('__Host-token', token, {
     httpOnly: true,
     secure: true,
     sameSite: 'strict',
     path: '/',
-    maxAge: 30 * 60
+    maxAge: 2 * 60 * 60
   }));
 
   return res.status(200).json({ ok: true });
