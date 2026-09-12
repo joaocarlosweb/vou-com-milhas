@@ -17,10 +17,28 @@ function sanitizePhone(s) {
 
 function verifyAuth(req) {
   const cookies = cookie.parse(req.headers.cookie || '');
-  const token = cookies.token;
+  const token = cookies['__Host-token'] || cookies.token;
   const JWT_SECRET = process.env.JWT_SECRET;
   if (!token || !JWT_SECRET) return false;
-  try { jwt.verify(token, JWT_SECRET); return true; } catch { return false; }
+  try { jwt.verify(token, JWT_SECRET, { issuer: 'vou-com-milhas', audience: 'admin' }); return true; } catch { return false; }
+}
+
+function setCors(req, res) {
+  const origin = req.headers.origin;
+  const allowed = (process.env.ALLOWED_ORIGINS || '').split(',').map(s=>s.trim()).filter(Boolean);
+  const defaultAllowed = ['https://vou-com-milhas.vercel.app', 'https://www.vou-com-milhas.vercel.app'];
+  const whitelist = allowed.length ? allowed : defaultAllowed;
+  if (origin && whitelist.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  }
+  if (allowed.includes('*') && origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
 }
 
 async function getLeadsFromBlobOrFile() {
@@ -244,9 +262,7 @@ async function clearAllLeads() {
 }
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   if (req.method === 'GET') {
@@ -301,14 +317,14 @@ module.exports = async (req, res) => {
       ip: (req.headers['x-forwarded-for']||'').split(',')[0]?.trim().slice(0,45) || (req.headers['x-real-ip']||'').slice(0,45) || ''
     };
     const result = await saveLeadAppend(novo);
-    if (!result.ok) return res.status(500).json({ error: 'Falha ao salvar lead', detail: result.error });
+    if (!result.ok) { console.error('saveLead err', result.error); return res.status(500).json({ error: 'Falha ao salvar lead' }); }
     return res.status(201).json({ ok: true, id: novo.id });
   }
 
   if (req.method === 'DELETE') {
     if (!verifyAuth(req)) return res.status(401).json({ error: 'Não autorizado' });
     const result = await clearAllLeads();
-    if (!result.ok) return res.status(500).json({ error: 'Falha ao limpar', detail: result.error });
+    if (!result.ok) { console.error('clearLeads err', result.error); return res.status(500).json({ error: 'Falha ao limpar' }); }
     return res.status(200).json({ ok: true });
   }
 

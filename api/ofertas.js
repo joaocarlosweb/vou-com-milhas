@@ -6,10 +6,32 @@ const path = require('path');
 
 function verifyAuth(req) {
   const cookies = cookie.parse(req.headers.cookie || '');
-  const token = cookies.token;
+  const token = cookies['__Host-token'] || cookies.token;
   const JWT_SECRET = process.env.JWT_SECRET;
   if (!token || !JWT_SECRET) return false;
-  try { jwt.verify(token, JWT_SECRET); return true; } catch { return false; }
+  try { jwt.verify(token, JWT_SECRET, { issuer: 'vou-com-milhas', audience: 'admin' }); return true; } catch { return false; }
+}
+
+function setCors(req, res) {
+  const origin = req.headers.origin;
+  const allowed = (process.env.ALLOWED_ORIGINS || '').split(',').map(s=>s.trim()).filter(Boolean);
+  const defaultAllowed = ['https://vou-com-milhas.vercel.app', 'https://www.vou-com-milhas.vercel.app'];
+  const whitelist = allowed.length ? allowed : defaultAllowed;
+  // permite sem origin (curl, server-side) ou se estiver na whitelist
+  if (origin && whitelist.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  } else if (!origin) {
+    // não seta ACAO para requisições sem origin (evita wildcard)
+  }
+  // para compat durante transição, se ALLOWED_ORIGINS=* libera (não recomendado produção)
+  if (allowed.includes('*') && origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
 }
 
 async function getOfertasFromBlobOrFile() {
@@ -71,9 +93,7 @@ async function getOfertasFromBlobOrFile() {
 }
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   if (req.method === 'GET') {
@@ -103,6 +123,19 @@ module.exports = async (req, res) => {
     const allowedTipos = ['Econômica','Econômica Premium','Executiva','Primeira'];
     const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     const strip = s => String(s||'').replace(/<[^>]*>/g,'').trim();
+    const sanitizeImagem = (url) => {
+      const s = String(url||'').trim().slice(0,2000);
+      if (!s) return '';
+      if (s.startsWith('https://')) {
+        try { const u = new URL(s); if (u.protocol !== 'https:') return ''; return s; } catch { return ''; }
+      }
+      if (s.startsWith('data:image/') && s.includes(';base64,')) {
+        if (s.length > 1500000) return '';
+        if (s.includes('image/svg')) return '';
+        return s;
+      }
+      return '';
+    };
     body = body.slice(0, 100).map(o => ({
       id: Number(o.id) || Date.now(),
       origem: esc(strip(o.origem||'')).slice(0,40),
@@ -123,7 +156,7 @@ module.exports = async (req, res) => {
       duracao: esc(strip(o.duracao||'')).slice(0,10),
       escalas: Math.min(2, Math.max(0, parseInt(o.escalas)||0)),
       bagagem: esc(String(o.bagagem||'10kg').slice(0,20)),
-      imagem: String(o.imagem||'').slice(0,2000),
+      imagem: sanitizeImagem(o.imagem),
       status: ['ativa','encerrada','pausada'].includes(o.status) ? o.status : 'ativa',
       destaque: !!o.destaque,
       vagasTexto: esc(strip(o.vagasTexto||'')).slice(0,40),
@@ -174,7 +207,7 @@ module.exports = async (req, res) => {
         saved = true;
       } catch (err) {
         console.error('Erro fallback /tmp ofertas', err);
-        return res.status(500).json({ error: 'Falha ao salvar', detail: lastErr ? lastErr.message : String(err) });
+        return res.status(500).json({ error: 'Falha ao salvar' });
       }
     }
     return res.status(200).json({ ok: true, count: body.length });

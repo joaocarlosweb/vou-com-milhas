@@ -10,14 +10,8 @@ module.exports = async (req, res) => {
 
   try {
     const payload = jwt.verify(token, JWT_SECRET, { issuer: 'vou-com-milhas', audience: 'admin' });
-    // Compat: tokens antigos sem iss/aud ainda válidos até expirarem
     return res.status(200).json({ ok: true, user: payload.user });
   } catch (e) {
-    try {
-      const payload = jwt.verify(token, JWT_SECRET);
-      return res.status(200).json({ ok: true, user: payload.user });
-    } catch {
-      return res.status(401).json({ ok: false });
-    }
+    return res.status(401).json({ ok: false });
   }
 };

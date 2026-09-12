@@ -5,10 +5,10 @@ const { rate } = require('./_rate');
 
 function verifyAuth(req) {
   const cookies = cookie.parse(req.headers.cookie || '');
-  const token = cookies.token;
+  const token = cookies['__Host-token'] || cookies.token;
   const JWT_SECRET = process.env.JWT_SECRET;
   if (!token || !JWT_SECRET) return false;
-  try { jwt.verify(token, JWT_SECRET); return true; } catch { return false; }
+  try { jwt.verify(token, JWT_SECRET, { issuer: 'vou-com-milhas', audience: 'admin' }); return true; } catch { return false; }
 }
 
 module.exports = async (req, res) => {
@@ -64,7 +64,7 @@ module.exports = async (req, res) => {
     });
     return res.status(200).json({ url: blob.url });
   } catch (e) {
-    console.error('Upload falhou', e);
-    return res.status(500).json({ error: 'Falha no upload', details: e.message });
+    console.error('Upload falhou', e.message);
+    return res.status(500).json({ error: 'Falha no upload' });
   }
 };

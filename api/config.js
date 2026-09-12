@@ -6,10 +6,28 @@ const path = require('path');
 
 function verifyAuth(req) {
   const cookies = cookie.parse(req.headers.cookie || '');
-  const token = cookies.token;
+  const token = cookies['__Host-token'] || cookies.token;
   const JWT_SECRET = process.env.JWT_SECRET;
   if (!token || !JWT_SECRET) return false;
-  try { jwt.verify(token, JWT_SECRET); return true; } catch { return false; }
+  try { jwt.verify(token, JWT_SECRET, { issuer: 'vou-com-milhas', audience: 'admin' }); return true; } catch { return false; }
+}
+
+function setCors(req, res) {
+  const origin = req.headers.origin;
+  const allowed = (process.env.ALLOWED_ORIGINS || '').split(',').map(s=>s.trim()).filter(Boolean);
+  const defaultAllowed = ['https://vou-com-milhas.vercel.app', 'https://www.vou-com-milhas.vercel.app'];
+  const whitelist = allowed.length ? allowed : defaultAllowed;
+  if (origin && whitelist.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  }
+  if (allowed.includes('*') && origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
 }
 
 async function getConfigFromBlobOrFile() {
@@ -63,9 +81,7 @@ async function getConfigFromBlobOrFile() {
 }
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   if (req.method === 'GET') {
@@ -135,7 +151,7 @@ module.exports = async (req, res) => {
         return res.status(200).json({ ok: true });
       } catch (e) {
         console.error('Erro fallback /tmp config', e);
-        return res.status(500).json({ error: 'Falha ao salvar', detail: lastErr ? lastErr.message : String(e) });
+        return res.status(500).json({ error: 'Falha ao salvar' });
       }
     }
     return res.status(200).json({ ok: true });
