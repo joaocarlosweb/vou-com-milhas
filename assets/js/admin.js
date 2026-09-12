@@ -112,7 +112,7 @@ async function loadInitialData(){
   }
 }
 async function persistOfertas(){
-  // tenta API (produção segura), fallback localStorage (dev)
+  // tenta API (produção segura) - global KV/Blob, fallback localStorage (dev)
   try {
     const r = await fetch('/api/ofertas', {
       method: 'POST',
@@ -123,33 +123,43 @@ async function persistOfertas(){
     if(r.ok) {
       localStorage.setItem(LS_OFERTAS, JSON.stringify(ofertas));
       localStorage.setItem(LS_VIAGENS, JSON.stringify(ofertas));
-      return;
+      return true;
     }
-  } catch {}
+    const errTxt = await r.text().catch(()=> '');
+    console.error('persistOfertas falhou', r.status, errTxt.slice(0,300));
+    if(r.status===401) toast('Sessão expirada - faça login novamente','warn');
+    else toast('Falha ao salvar no servidor ('+r.status+') - salvo localmente','warn');
+  } catch (e) {
+    console.error('persistOfertas fetch erro', e);
+    toast('Sem conexão com servidor - salvo localmente','warn');
+  }
   localStorage.setItem(LS_OFERTAS, JSON.stringify(ofertas));
   localStorage.setItem(LS_VIAGENS, JSON.stringify(ofertas));
+  return false;
 }
 async function persistConfig(){
   localStorage.setItem(LS_CONFIG, JSON.stringify(config));
   try {
-    await fetch('/api/config', {
+    const r=await fetch('/api/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify(config)
     });
-  } catch {}
+    if(!r.ok) toast('Config salvo local, falha no servidor','warn');
+  } catch { toast('Config salvo local, sem conexão','warn'); }
 }
 async function persistEmpresa(){
   localStorage.setItem(LS_EMPRESA, JSON.stringify(empresa));
   try {
-    await fetch('/api/empresa', {
+    const r=await fetch('/api/empresa', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify(empresa)
     });
-  } catch {}
+    if(!r.ok) toast('Empresa salva local, falha no servidor','warn');
+  } catch { toast('Empresa salva local, sem conexão','warn'); }
 }
 
 // Leads globais via Blob (fallback localStorage) - não zera cache se API retornar vazio por stale
@@ -606,18 +616,23 @@ window.toggleStatus=async id=>{
     await persistOfertas(); renderAll();
     if(confirm('Oferta encerrada. Copiar mensagem de ENCERRADA para o canal?')) copiarLinkCanal(id, true);
   } else {
-    // Reativar com modal para atualizar datas/preço (evita reativar desatualizada)
-    toast('Atualize datas, validade e preço antes de reativar','warn');
+    // Reativar: abre modal para usuário ESCOLHER data/validade e preço
+    toast('Escolha nova validade e confira preço/datas antes de reativar','warn');
     openModal(id);
-    // Preenche validade com amanhã se vencida, mas deixa usuário confirmar
     setTimeout(()=>{
+      // muda título para deixar claro que é reativação com escolha de data
+      const titleEl=$('#modal-title'); if(titleEl) titleEl.textContent='Reativar oferta - escolha nova data';
+      const btnEl=$('#btn-salvar-oferta'); if(btnEl) btnEl.textContent='Reativar oferta';
       const vInput=$('#f-validade');
       const h=new Date(); h.setHours(0,0,0,0); const v=new Date(o.validadeAte); v.setHours(0,0,0,0);
-      if(v<h && vInput){
-        const amanha=new Date(); amanha.setDate(amanha.getDate()+1);
-        vInput.value=amanha.toISOString().slice(0,10);
+      if(vInput){
+        if(!o.validadeAte || isNaN(v) || v<h){
+          const amanha=new Date(); amanha.setDate(amanha.getDate()+1);
+          vInput.value=amanha.toISOString().slice(0,10);
+        }
         vInput.classList.add('ring-2','ring-amber-400');
-        setTimeout(()=> vInput.classList.remove('ring-2','ring-amber-400'), 2000);
+        vInput.focus();
+        setTimeout(()=> vInput.classList.remove('ring-2','ring-amber-400'), 2500);
       }
       const statusSel=$('#f-status');
       if(statusSel) statusSel.value='ativa';
