@@ -267,7 +267,26 @@ async function loadData() {
   // expõe global para admin
   window.ofertasData = viagensData;
   window.empresaData = empresaData;
+  window.configData = configData;
+  // atualiza todos os wa.me com número global (preserva text original)
+  try { atualizarWhatsAppLinks(); } catch {}
 }
+
+function atualizarWhatsAppLinks() {
+  const wa = (configData.whatsapp || WHATSAPP_FALLBACK).replace(/\D/g,'');
+  if (!wa) return;
+  document.querySelectorAll('a[href*="wa.me"]').forEach(a=>{
+    try {
+      const url = new URL(a.href);
+      const text = url.searchParams.get('text');
+      // preserva text original de cada botão (Ol% C3%A1 vim..., Ol%C3%A1 preciso..., Quero ajuda...)
+      a.href = text ? `https://wa.me/${wa}?text=${text}` : `https://wa.me/${wa}`;
+    } catch {}
+  });
+}
+// atualiza wa.me periodicamente caso config mude (admin alterou número)
+setInterval(()=>{ try{ atualizarWhatsAppLinks(); }catch{} }, 30000);
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') try{ atualizarWhatsAppLinks(); }catch{} });
 
 // INDEX PAGE LOGIC - sempre mostra ofertas ATIVAS no feed
 async function initIndex() {
