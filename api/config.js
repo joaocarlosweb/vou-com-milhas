@@ -38,6 +38,14 @@ async function getConfigFromBlobOrFile() {
       }
     }
   } catch {}
+  // fallback /tmp (serverless) e data/
+  try {
+    const tmpPath = path.join('/tmp', 'config.json');
+    if (fs.existsSync(tmpPath)) {
+      const data = fs.readFileSync(tmpPath, 'utf-8');
+      return JSON.parse(data);
+    }
+  } catch {}
   try {
     const filePath = path.join(process.cwd(), 'data', 'config.json');
     if (fs.existsSync(filePath)) {
@@ -80,22 +88,40 @@ module.exports = async (req, res) => {
       whatsapp: (body.whatsapp || '').toString().replace(/\D/g, '') || '5584998979071',
       nomeEmpresa: (body.nomeEmpresa || body.nome || 'Vou com Milhas').toString().slice(0, 80)
     };
+    let saved = false;
+    let lastErr = null;
     try {
       const token = process.env.BLOB_READ_WRITE_TOKEN;
-      if (!token) throw new Error('BLOB_READ_WRITE_TOKEN ausente');
-      await put('config.json', JSON.stringify(toSave, null, 2), {
-        access: 'public',
-        contentType: 'application/json',
-        addRandomSuffix: false,
-        allowOverwrite: true,
-        cacheControlMaxAge: 0,
-        token
-      });
-      return res.status(200).json({ ok: true });
+      if (token) {
+        await put('config.json', JSON.stringify(toSave, null, 2), {
+          access: 'public',
+          contentType: 'application/json',
+          addRandomSuffix: false,
+          allowOverwrite: true,
+          cacheControlMaxAge: 0,
+          token
+        });
+        saved = true;
+      }
     } catch (e) {
-      console.error('Erro salvar config', e);
-      return res.status(500).json({ error: 'Falha ao salvar', detail: e.message });
+      console.error('Erro salvar config no Blob (fallback /tmp)', e.message);
+      lastErr = e;
     }
+    if (!saved) {
+      try {
+        const tmpPath = path.join('/tmp', 'config.json');
+        fs.writeFileSync(tmpPath, JSON.stringify(toSave, null, 2), 'utf-8');
+        try {
+          const filePath = path.join(process.cwd(), 'data', 'config.json');
+          fs.writeFileSync(filePath, JSON.stringify(toSave, null, 2), 'utf-8');
+        } catch {}
+        return res.status(200).json({ ok: true });
+      } catch (e) {
+        console.error('Erro fallback /tmp config', e);
+        return res.status(500).json({ error: 'Falha ao salvar', detail: lastErr ? lastErr.message : String(e) });
+      }
+    }
+    return res.status(200).json({ ok: true });
   }
 
   return res.status(405).json({ error: 'Method not allowed' });

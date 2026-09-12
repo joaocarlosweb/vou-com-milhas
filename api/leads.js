@@ -78,7 +78,34 @@ async function getLeadsFromBlobOrFile() {
   } catch (e) {
     console.warn('Blob read leads falhou, fallback file', e.message);
   }
-  // fallback arquivo local (dev)
+  // fallback /tmp (serverless) e arquivo local (dev)
+  const tmpPath = path.join('/tmp', 'leads.json');
+  try {
+    if (fs.existsSync(tmpPath)) {
+      const data = fs.readFileSync(tmpPath, 'utf-8');
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed) && parsed.length) return parsed;
+    }
+  } catch {}
+  // tenta /tmp leads/ prefix (fallback append)
+  try {
+    const tmpDir = path.join('/tmp', 'leads');
+    if (fs.existsSync(tmpDir)) {
+      const files = fs.readdirSync(tmpDir);
+      let leads = [];
+      files.slice(0, 500).forEach(f => {
+        try {
+          const data = JSON.parse(fs.readFileSync(path.join(tmpDir, f), 'utf-8'));
+          if (data && data.id) leads.push(data);
+          else if (Array.isArray(data)) leads = leads.concat(data);
+        } catch {}
+      });
+      if (leads.length) {
+        leads.sort((a,b) => (a.createdAt||'').localeCompare(b.createdAt||'') || (a.id||0)-(b.id||0));
+        return leads;
+      }
+    }
+  } catch {}
   try {
     const filePath = path.join(process.cwd(), 'data', 'leads.json');
     if (fs.existsSync(filePath)) {
@@ -92,50 +119,90 @@ async function getLeadsFromBlobOrFile() {
 
 async function saveLeadAppend(lead) {
   const token = process.env.BLOB_READ_WRITE_TOKEN;
-  if (!token) {
-    console.error('saveLeadAppend: BLOB_READ_WRITE_TOKEN ausente');
-    return { ok: false, error: 'BLOB_READ_WRITE_TOKEN ausente' };
+  // tenta Blob se token existir
+  if (token) {
+    try {
+      const key = `leads/${lead.id}-${Math.random().toString(36).slice(2,6)}.json`;
+      await put(key, JSON.stringify(lead), {
+        access: 'public',
+        contentType: 'application/json',
+        addRandomSuffix: false,
+        cacheControlMaxAge: 0,
+        token
+      });
+      return { ok: true };
+    } catch (e) {
+      console.error('Erro ao salvar lead append no Blob (fallback /tmp)', e.message);
+      // fallback para /tmp
+    }
   }
+  // fallback /tmp (serverless) - garante que POST não dê 500 mesmo com Blob suspenso
   try {
-    const key = `leads/${lead.id}-${Math.random().toString(36).slice(2,6)}.json`;
-    await put(key, JSON.stringify(lead), {
-      access: 'public',
-      contentType: 'application/json',
-      addRandomSuffix: false,
-      cacheControlMaxAge: 0,
-      token
-    });
+    const tmpDir = path.join('/tmp', 'leads');
+    if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
+    const filePath = path.join(tmpDir, `${lead.id}-${Math.random().toString(36).slice(2,6)}.json`);
+    fs.writeFileSync(filePath, JSON.stringify(lead), 'utf-8');
+    // também mantém /tmp/leads.json agregado para compat
+    try {
+      const aggPath = path.join('/tmp', 'leads.json');
+      let arr = [];
+      if (fs.existsSync(aggPath)) {
+        try { arr = JSON.parse(fs.readFileSync(aggPath, 'utf-8')); } catch {}
+      }
+      if (!Array.isArray(arr)) arr = [];
+      arr.push(lead);
+      if (arr.length > 5000) arr.splice(0, arr.length - 5000);
+      fs.writeFileSync(aggPath, JSON.stringify(arr), 'utf-8');
+    } catch {}
     return { ok: true };
   } catch (e) {
-    console.error('Erro ao salvar lead append', e.message, e);
+    console.error('Erro fallback /tmp leads', e.message);
     return { ok: false, error: e.message };
   }
 }
 
 async function clearAllLeads() {
   const token = process.env.BLOB_READ_WRITE_TOKEN;
-  if (!token) return { ok: false, error: 'BLOB_READ_WRITE_TOKEN ausente' };
-  try {
-    // apaga todos os arquivos em leads/ e o legado leads.json
-    const blobs = await list({ prefix: 'leads', token });
-    const urls = blobs.blobs?.map(b => b.url) || [];
-    if (urls.length) {
-      await del(urls, { token });
-    }
-    // garante que legado também é limpo
+  // tenta limpar Blob se token existir, mas não falha se não existir (fallback /tmp)
+  if (token) {
     try {
-      await put('leads.json', JSON.stringify([]), {
-        access: 'public',
-        contentType: 'application/json',
-        addRandomSuffix: false,
-        allowOverwrite: true,
-        cacheControlMaxAge: 0,
-        token
+      const blobs = await list({ prefix: 'leads', token });
+      const urls = blobs.blobs?.map(b => b.url) || [];
+      if (urls.length) {
+        await del(urls, { token });
+      }
+      try {
+        await put('leads.json', JSON.stringify([]), {
+          access: 'public',
+          contentType: 'application/json',
+          addRandomSuffix: false,
+          allowOverwrite: true,
+          cacheControlMaxAge: 0,
+          token
+        });
+      } catch {}
+    } catch (e) {
+      console.warn('clear Blob falhou, tentando /tmp', e.message);
+    }
+  }
+  // sempre limpa /tmp
+  try {
+    const tmpDir = path.join('/tmp', 'leads');
+    if (fs.existsSync(tmpDir)) {
+      fs.readdirSync(tmpDir).forEach(f => {
+        try { fs.unlinkSync(path.join(tmpDir, f)); } catch {}
       });
+    }
+    const aggPath = path.join('/tmp', 'leads.json');
+    if (fs.existsSync(aggPath)) fs.writeFileSync(aggPath, JSON.stringify([]), 'utf-8');
+    // tenta limpar data/leads.json dev
+    try {
+      const filePath = path.join(process.cwd(), 'data', 'leads.json');
+      if (fs.existsSync(filePath)) fs.writeFileSync(filePath, JSON.stringify([]), 'utf-8');
     } catch {}
     return { ok: true };
   } catch (e) {
-    console.error('Erro ao limpar leads', e.message);
+    console.error('Erro ao limpar leads /tmp', e.message);
     return { ok: false, error: e.message };
   }
 }

@@ -46,7 +46,15 @@ async function getOfertasFromBlobOrFile() {
   } catch (e) {
     console.warn('Blob read ofertas falhou, fallback file', e.message);
   }
-  // fallback arquivo local (dev ou seed)
+  // fallback: tenta /tmp (serverless writable) e data/ofertas.json (dev/seed)
+  const tmpPath = path.join('/tmp', 'ofertas.json');
+  try {
+    if (fs.existsSync(tmpPath)) {
+      const data = fs.readFileSync(tmpPath, 'utf-8');
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed) && parsed.length) return parsed;
+    }
+  } catch {}
   try {
     const filePath = path.join(process.cwd(), 'data', 'ofertas.json');
     const data = fs.readFileSync(filePath, 'utf-8');
@@ -85,7 +93,9 @@ module.exports = async (req, res) => {
     }
     if (!Array.isArray(body)) return res.status(400).json({ error: 'Esperado array de ofertas' });
 
-    // tenta salvar no Blob se token existir, senão tenta fs (só funciona em dev)
+    // tenta salvar no Blob se token existir, senão tenta fs/tmp
+    let saved = false;
+    let lastErr = null;
     try {
       const token = process.env.BLOB_READ_WRITE_TOKEN;
       if (token) {
@@ -97,19 +107,26 @@ module.exports = async (req, res) => {
           cacheControlMaxAge: 0,
           token
         });
-      } else {
-        // dev: escreve local
-        const filePath = path.join(process.cwd(), 'data', 'ofertas.json');
-        fs.writeFileSync(filePath, JSON.stringify(body, null, 2), 'utf-8');
+        saved = true;
       }
     } catch (e) {
-      console.error('Erro ao salvar ofertas', e);
-      // tenta fs fallback
+      console.error('Erro ao salvar ofertas no Blob (fallback para /tmp)', e.message);
+      lastErr = e;
+    }
+    if (!saved) {
+      // fallback: /tmp (serverless) e data/ (dev) - /tmp é o que persiste entre invokes no mesmo lambda
       try {
-        const filePath = path.join(process.cwd(), 'data', 'ofertas.json');
-        fs.writeFileSync(filePath, JSON.stringify(body, null, 2), 'utf-8');
+        const tmpPath = path.join('/tmp', 'ofertas.json');
+        fs.writeFileSync(tmpPath, JSON.stringify(body, null, 2), 'utf-8');
+        // tenta também data/ para dev
+        try {
+          const filePath = path.join(process.cwd(), 'data', 'ofertas.json');
+          fs.writeFileSync(filePath, JSON.stringify(body, null, 2), 'utf-8');
+        } catch {}
+        saved = true;
       } catch (err) {
-        return res.status(500).json({ error: 'Falha ao salvar' });
+        console.error('Erro fallback /tmp ofertas', err);
+        return res.status(500).json({ error: 'Falha ao salvar', detail: lastErr ? lastErr.message : String(err) });
       }
     }
     return res.status(200).json({ ok: true, count: body.length });

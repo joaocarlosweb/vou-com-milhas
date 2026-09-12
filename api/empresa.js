@@ -39,6 +39,13 @@ async function getEmpresaFromBlobOrFile() {
     }
   } catch {}
   try {
+    const tmpPath = path.join('/tmp', 'empresa.json');
+    if (fs.existsSync(tmpPath)) {
+      const data = fs.readFileSync(tmpPath, 'utf-8');
+      return JSON.parse(data);
+    }
+  } catch {}
+  try {
     const filePath = path.join(process.cwd(), 'data', 'empresa.json');
     if (fs.existsSync(filePath)) {
       const data = fs.readFileSync(filePath, 'utf-8');
@@ -76,22 +83,40 @@ module.exports = async (req, res) => {
       }
     }
     if (!body || typeof body !== 'object' || Array.isArray(body)) return res.status(400).json({ error: 'Body inválido' });
+    let saved = false;
+    let lastErr = null;
     try {
       const token = process.env.BLOB_READ_WRITE_TOKEN;
-      if (!token) throw new Error('BLOB_READ_WRITE_TOKEN ausente');
-      await put('empresa.json', JSON.stringify(body, null, 2), {
-        access: 'public',
-        contentType: 'application/json',
-        addRandomSuffix: false,
-        allowOverwrite: true,
-        cacheControlMaxAge: 0,
-        token
-      });
-      return res.status(200).json({ ok: true });
+      if (token) {
+        await put('empresa.json', JSON.stringify(body, null, 2), {
+          access: 'public',
+          contentType: 'application/json',
+          addRandomSuffix: false,
+          allowOverwrite: true,
+          cacheControlMaxAge: 0,
+          token
+        });
+        saved = true;
+      }
     } catch (e) {
-      console.error('Erro salvar empresa', e);
-      return res.status(500).json({ error: 'Falha ao salvar', detail: e.message });
+      console.error('Erro salvar empresa no Blob (fallback /tmp)', e.message);
+      lastErr = e;
     }
+    if (!saved) {
+      try {
+        const tmpPath = path.join('/tmp', 'empresa.json');
+        fs.writeFileSync(tmpPath, JSON.stringify(body, null, 2), 'utf-8');
+        try {
+          const filePath = path.join(process.cwd(), 'data', 'empresa.json');
+          fs.writeFileSync(filePath, JSON.stringify(body, null, 2), 'utf-8');
+        } catch {}
+        return res.status(200).json({ ok: true });
+      } catch (e) {
+        console.error('Erro fallback /tmp empresa', e);
+        return res.status(500).json({ error: 'Falha ao salvar', detail: lastErr ? lastErr.message : String(e) });
+      }
+    }
+    return res.status(200).json({ ok: true });
   }
 
   return res.status(405).json({ error: 'Method not allowed' });
