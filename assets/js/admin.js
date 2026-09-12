@@ -597,15 +597,25 @@ window.toggleStatus=async id=>{
     if(!confirm(`Encerrar oferta ${o.origem}→${o.destino} (${o.datas})? Ela sumirá do site em 1s.`)) return;
     o.status='encerrada'; o.encerradaEm=new Date().toISOString();
     toast('Oferta encerrada! Saiu do site.','info');
-  } else {
-    o.status='ativa';
-    const h=new Date(); h.setHours(0,0,0,0); const v=new Date(o.validadeAte); v.setHours(0,0,0,0);
-    if(v<h){ const amanha=new Date(); amanha.setDate(amanha.getDate()+1); o.validadeAte=amanha.toISOString().slice(0,10); }
-    toast('Oferta reativada!','success');
-  }
-  await persistOfertas(); renderAll();
-  if(o.status==='encerrada'){
+    await persistOfertas(); renderAll();
     if(confirm('Oferta encerrada. Copiar mensagem de ENCERRADA para o canal?')) copiarLinkCanal(id, true);
+  } else {
+    // Reativar com modal para atualizar datas/preço (evita reativar desatualizada)
+    toast('Atualize datas, validade e preço antes de reativar','warn');
+    openModal(id);
+    // Preenche validade com amanhã se vencida, mas deixa usuário confirmar
+    setTimeout(()=>{
+      const vInput=$('#f-validade');
+      const h=new Date(); h.setHours(0,0,0,0); const v=new Date(o.validadeAte); v.setHours(0,0,0,0);
+      if(v<h && vInput){
+        const amanha=new Date(); amanha.setDate(amanha.getDate()+1);
+        vInput.value=amanha.toISOString().slice(0,10);
+        vInput.classList.add('ring-2','ring-amber-400');
+        setTimeout(()=> vInput.classList.remove('ring-2','ring-amber-400'), 2000);
+      }
+      const statusSel=$('#f-status');
+      if(statusSel) statusSel.value='ativa';
+    }, 100);
   }
 };
 window.copiarLinkCanal=(id, encerrada=false)=>{
