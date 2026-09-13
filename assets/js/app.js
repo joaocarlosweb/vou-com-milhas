@@ -575,7 +575,7 @@ window.consultarOferta=consultarOferta;
 function renderDestaques(){
   const wrapper=document.getElementById('destinos-wrapper');
   if(!wrapper) { bindSwiperFallback(); return; }
-  const destaques=viagensData.filter(o=> o.destaque && isAtiva(o)).slice(0,6);
+  const destaques=viagensData.filter(o=> o.destaque && isAtiva(o)).slice(0,12);
   const section=wrapper.closest('section');
   if(destaques.length===0){
     if(section) section.style.display='none';
